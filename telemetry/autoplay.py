@@ -28,7 +28,7 @@ def rpc(port, method, **params):
     body = json.dumps({"jsonrpc": "2.0", "method": method, "params": params, "id": 1}).encode()
     req = urllib.request.Request(f"http://127.0.0.1:{port}", body, {"Content-Type": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=float(os.environ.get("RPC_TIMEOUT", 90))) as resp:
+        with urllib.request.urlopen(req, timeout=float(os.environ.get("RPC_TIMEOUT", "90"))) as resp:
             reply = json.load(resp)
     # OSError covers timeouts, resets and URLError. A timeout is BalatroBot waiting on a completion
     # condition that never holds (seen with `buy`); the game keeps running, so re-read and move on.

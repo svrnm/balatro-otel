@@ -5,7 +5,7 @@
 # janks for seconds and requests time out, hiding the injected faults.
 # container/run.sh failing is expected: its checks are supposed to catch the faults.
 set -uo pipefail
-cd "$(dirname "$0")/../.."
+cd "$(dirname "$0")/../.." || exit 1
 OUT=telemetry/live-check-report
 START=$(date +%s)
 rm -rf "$OUT"/wave-* "$OUT"/container-*

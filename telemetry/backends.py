@@ -33,7 +33,7 @@ def attrs(items):
 
 
 def _rfc3339(unix):
-    return datetime.datetime.fromtimestamp(unix, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.datetime.fromtimestamp(unix, datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def failed(span):

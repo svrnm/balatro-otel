@@ -1,0 +1,28 @@
+name: Bug report
+description: Something in the mod or the tooling does not work as expected
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce
+      description: Seed, deck and stake help a lot; so does whether it happens with only this mod installed.
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: otel-trace, Balatro, Steamodded, Lovely, OS
+      placeholder: otel-trace 0.2.0, Balatro 1.0.1o, Steamodded 26.1002.0, Lovely 0.10.0, macOS 26
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Lines with [otel] from Lovely's log (Mods/lovely/log), or the collector's output.
+      render: text

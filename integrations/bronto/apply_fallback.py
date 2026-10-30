@@ -32,7 +32,7 @@ def bronto(method, path, body=None):
             json.dump(body, f)
             f.flush()
             cmd += ["--input", f.name]
-        proc = subprocess.run(cmd, capture_output=True, text=True)
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # returncode is checked below
     reply = json.loads(proc.stdout) if proc.stdout.strip() else {}  # 204s have no body
     if proc.returncode != 0 or (isinstance(reply, dict) and "error" in reply):
         raise SystemExit(f"{method} {path}: {reply.get('error') if isinstance(reply, dict) else proc.stderr}")

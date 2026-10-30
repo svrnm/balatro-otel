@@ -9,10 +9,11 @@ import glob
 import re
 import sys
 import time
+from pathlib import Path
 
 sys.path.insert(0, __file__.rsplit("/", 2)[0])
-from backends import failed, logs, prom, traces  # noqa: E402
-from check_traces import FORCED_SCORE  # noqa: E402
+from backends import failed, logs, prom, traces
+from check_traces import FORCED_SCORE
 
 START = END = 0  # the report window, set in main()
 
@@ -47,7 +48,7 @@ def duration(span):
 def sessions():
     found = []
     for d in sorted(glob.glob("telemetry/live-check-report/container-*") + glob.glob("telemetry/live-check-report/wave-*/container-*")):
-        log = "".join(open(f, errors="replace").read() for f in glob.glob(f"{d}/lovely-log/*.log"))
+        log = "".join(Path(f).read_text(errors="replace") for f in glob.glob(f"{d}/lovely-log/*.log"))
         session = re.search(r"\[otel\] loaded, session ([0-9a-f-]{36})", log)
         chaos = re.search(r"\[chaos\] scenarios: (\S+)", log)
         if session:
@@ -113,7 +114,7 @@ def crash(s):
     a = found[0]["attrs"]
     frames = [ln.strip() for ln in str(a.get("exception.stacktrace", "")).splitlines() if "otel-chaos" in ln][:1]
     # last_over_time: an instant query only looks back 5 minutes, and the session is over
-    crashes = prom('sum(last_over_time(balatro_crashes_total{instance="%s"}[3h]))' % s)
+    crashes = prom(f'sum(last_over_time(balatro_crashes_total{{instance="{s}"}}[3h]))')
     return (f'app.crash "{a.get("exception.message")}" in state {a.get("balatro.game.state")}, '
             f"stack {frames}; {len(failed_spans)} failed spans; balatro_crashes_total={crashes}")
 

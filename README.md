@@ -1,5 +1,8 @@
 # balatro-otel
 
+[![CI](https://github.com/svrnm/balatro-otel/actions/workflows/ci.yml/badge.svg)](https://github.com/svrnm/balatro-otel/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+
 OpenTelemetry for [Balatro](https://www.playbalatro.com/): a [Steamodded](https://github.com/Steamodded/smods)
 mod that turns a game into traces, logs and metrics, plus the tooling to test it by letting a bot
 play the game headless in containers.

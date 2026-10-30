@@ -4,10 +4,11 @@
 # every few waves. Each wave plays new seeds (W<wave>...). A failing wave does not stop the soak:
 # chaos and scenarios are supposed to trip the checks.
 #   telemetry/soak.sh [MINUTES]
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 end=$(( $(date +%s) + ${1:-60} * 60 ))
 decks=(RED BLUE YELLOW GREEN BLACK MAGIC PLASMA ABANDONED)
 stakes=(WHITE WHITE RED GREEN)
+# shellcheck disable=SC2054 # commas belong to the specs (chaos lists)
 extras=(RED:WHITE:1:jank,slow_joker RED:WHITE:1::mouth RED:WHITE:2:leak RED:WHITE:1:mod_error
         RED:WHITE:1::retrigger RED:WHITE:1:score_bug RED:WHITE:1:crash RED:WHITE:1::perkeo)
 wave=0
