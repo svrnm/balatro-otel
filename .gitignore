@@ -8,3 +8,5 @@ telemetry/evidence/
 __pycache__/
 .venv/
 .DS_Store
+# the stack's log file (telemetry/stack)
+telemetry/stack/data/

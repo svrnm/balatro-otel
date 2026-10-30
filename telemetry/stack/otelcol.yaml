@@ -1,0 +1,30 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  otlp_grpc/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  # Prometheus' OTLP receiver; the exporter appends /v1/metrics
+  otlp_http/prometheus:
+    endpoint: http://prometheus:9090/api/v1/otlp
+  file/logs:
+    path: /data/logs.jsonl
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp_grpc/jaeger]
+    metrics:
+      receivers: [otlp]
+      exporters: [otlp_http/prometheus]
+    logs:
+      receivers: [otlp]
+      exporters: [file/logs]

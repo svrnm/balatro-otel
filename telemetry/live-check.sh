@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Validate telemetry against the registry with Weaver live-check.
 #   live-check.sh start   Weaver + a collector that accepts OTLP/HTTP on localhost:4319 and forwards
-#                         to Weaver and to the lgtm container (both on the balatro-otel network)
+#                         to Weaver and to the stack's collector (both on the balatro-otel network)
 #   live-check.sh stop    drains the collector, writes the report and prints a summary; exits 1 on
 #                         registry violations
 # Report and logs: telemetry/live-check-report/

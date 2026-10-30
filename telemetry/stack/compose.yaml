@@ -1,0 +1,46 @@
+# Local backends for the otel-trace mod: an OpenTelemetry Collector on :4317/:4318 that sends
+#   traces  -> Jaeger      http://localhost:16686
+#   metrics -> Prometheus  http://localhost:9090 (its native OTLP receiver)
+#   logs    -> data/logs.jsonl (one OTLP/JSON export request per line)
+# Start: docker compose -f telemetry/stack/compose.yaml up -d
+# Jaeger keeps traces in memory, so they are gone after a restart; Prometheus keeps its TSDB in a volume.
+name: balatro-otel
+
+services:
+  otelcol:
+    image: otel/opentelemetry-collector-contrib:0.162.0
+    container_name: otelcol
+    command: ["--config=/etc/otelcol/otelcol.yaml"]
+    volumes:
+      - ./otelcol.yaml:/etc/otelcol/otelcol.yaml:ro
+      - ./data:/data
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on: [jaeger, prometheus]
+
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-otlp-receiver
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+
+volumes:
+  prometheus-data:
+
+# The container runner and the live-check collector join this network by name.
+networks:
+  default:
+    name: balatro-otel

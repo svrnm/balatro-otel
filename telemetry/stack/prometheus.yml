@@ -1,0 +1,4 @@
+# Metrics arrive over OTLP (--web.enable-otlp-receiver), nothing is scraped.
+# service.name becomes the job label and service.instance.id (the game session) the instance label.
+global:
+  evaluation_interval: 15s

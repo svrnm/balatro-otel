@@ -9,7 +9,7 @@
 # SEED_PREFIX (default C, at most 3 characters) starts the seeds, so repeated calls play new runs.
 # SERVE_ARGS (default "--headless --fast") go to `balatrobot serve`; use "--fast" to exercise
 # rendering under Xvfb (Mesa software rendering, so timings are not representative).
-# Needs: the lgtm container (README) and the image: docker build -t balatro-otel-runner telemetry/container
+# Needs: the stack (telemetry/stack, see README) and the image: docker build -t balatro-otel-runner telemetry/container
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 GAME="$HOME/Library/Application Support/Steam/steamapps/common/Balatro/Balatro.app/Contents/Resources/Balatro.love"
@@ -17,7 +17,7 @@ SAVES="$HOME/Library/Application Support/Balatro"
 OUT=telemetry/live-check-report
 SPECS=("${@:-RED:WHITE:1}")
 
-docker inspect -f '{{.State.Running}}' lgtm >/dev/null 2>&1 || { echo "lgtm container is not running (see README)"; exit 1; }
+docker inspect -f '{{.State.Running}}' otelcol >/dev/null 2>&1 || { echo "the stack is not running: docker compose -f telemetry/stack/compose.yaml up -d"; exit 1; }
 START=$(date +%s)
 telemetry/live-check.sh start
 
@@ -44,6 +44,6 @@ for i in "${!pids[@]}"; do
   wait "${pids[$i]}" || { echo "container $i failed:"; tail -15 "$OUT/container-$i/output.log"; failed=1; }
 done
 telemetry/live-check.sh stop || failed=1
-sleep 30 # Tempo/Loki ingestion (a crashed run's trace has arrived later than 10 s)
+sleep 30 # let the last batches reach Jaeger and the log file (a crashed run's trace has arrived later than 10 s)
 python3 telemetry/check_traces.py "$START" || failed=1
 exit "$failed"

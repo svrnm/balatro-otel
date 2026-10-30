@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Consistency checks on what reached the backends (Tempo, Loki via Grafana), beyond naming:
+"""Consistency checks on what reached the local stack (Jaeger, the collector's log file), beyond naming:
 - every balatro.run trace has an outcome and at least one blind
 - each blind's score equals the sum of its hands' scores (blinds forced by autoplay are skipped)
 - each hand added to its blind what it scored (balatro.hand.blind_score_added == balatro.hand.score)
@@ -11,38 +11,13 @@
 Usage: check_traces.py <start-unix-seconds> [<end-unix-seconds>]
 """
 import collections
-import json
 import statistics
 import sys
 import time
-import urllib.parse
-import urllib.request
 
-GRAFANA = "http://localhost:3000/api/datasources/proxy/uid"
+from backends import failed, logs, traces
+
 FORCED_SCORE = 1e9  # autoplay's `set chips` before the last hand
-
-
-def get(path, **params):
-    url = f"{GRAFANA}/{path}?{urllib.parse.urlencode(params)}"
-    with urllib.request.urlopen(url, timeout=30) as resp:
-        return json.load(resp)
-
-
-def value(v):
-    for k in ("stringValue", "boolValue", "doubleValue"):
-        if k in v:
-            return v[k]
-    if "intValue" in v:
-        return int(v["intValue"])
-    return None
-
-
-def spans_of(trace):
-    for batch in trace.get("batches", trace.get("resourceSpans", [])):
-        for scope in batch.get("scopeSpans", []):
-            for s in scope["spans"]:
-                s["attrs"] = {a["key"]: value(a["value"]) for a in s.get("attributes", [])}
-                yield s
 
 
 def main():
@@ -51,15 +26,12 @@ def main():
     problems, memory = [], collections.defaultdict(list)  # session.id -> [(run start, live bytes)]
     checked = forced = 0
 
-    found = get("tempo/api/search", q='{ resource.service.name = "balatro" && name = "balatro.run" }',
-                start=start, end=end, limit=1000)
-    trace_ids = [t["traceID"] for t in found.get("traces", [])]
-    print(f"run traces: {len(trace_ids)}")
-    if not trace_ids:
+    runs = {tid: spans for tid, spans in traces(start, end).items() if any(x["name"] == "balatro.run" for x in spans)}
+    print(f"run traces: {len(runs)}")
+    if not runs:
         problems.append("no balatro.run traces in the window")
 
-    for tid in trace_ids:
-        spans = list(spans_of(get(f"tempo/api/traces/{tid}")))
+    for tid, spans in runs.items():
         run = next(s for s in spans if s["name"] == "balatro.run")
         label = f"run {run['attrs'].get('balatro.run.seed')} ({tid[:8]})"
         if "balatro.lua.memory.live" in run["attrs"]:
@@ -67,7 +39,7 @@ def main():
         if "balatro.run.outcome" not in run["attrs"]:
             problems.append(f"{label}: no balatro.run.outcome")
         for s in spans:
-            if s.get("status", {}).get("code") in (2, "STATUS_CODE_ERROR"):
+            if failed(s):
                 problems.append(f"{label}: span {s['name']} failed: {s['status'].get('message')}")
         blinds = [s for s in spans if s["name"] == "balatro.blind"]
         if not blinds and not run["attrs"].get("balatro.run.resumed"):  # a resumed run may end in the shop
@@ -93,11 +65,9 @@ def main():
             if "balatro.blind.won" in a and a["balatro.blind.won"] != (score >= target):
                 problems.append(f"{label}: {a.get('balatro.blind.name')} won={a['balatro.blind.won']} but score {score} vs target {target}")
 
-    hook_failures = get("loki/loki/api/v1/query_range", query='{service_name="balatro"} |= "otel hook failed"',
-                        start=start * 10**9, end=end * 10**9, limit=100)["data"]["result"]
-    for stream in hook_failures:
-        for _, line in stream["values"]:
-            problems.append(f"log: {line}")
+    for r in logs(start, end):
+        if "otel hook failed" in str(r.get("body", {}).get("stringValue", "")):
+            problems.append(f"log: {r['body']['stringValue']}")
 
     for session, points in memory.items():
         if len(points) < 4:
@@ -110,7 +80,7 @@ def main():
             problems.append(f"session {session[:8]}: live lua heap grows across runs: {first / 2**20:.1f} -> {last / 2**20:.1f} MiB")
 
     print(f"blinds: {checked} score-checked against their hands, {forced} forced by autoplay")
-    if trace_ids and not checked:
+    if runs and not checked:
         problems.append("no blind could be score-checked")
     for p in problems:
         print("PROBLEM:", p)

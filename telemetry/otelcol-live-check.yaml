@@ -1,6 +1,6 @@
 # Collector for live-check runs (started and stopped by live-check.sh, together with Weaver).
-# Receives OTLP/HTTP from the game and forwards everything to Weaver (gRPC only) and to lgtm, so
-# Grafana still shows the test session. Being as short-lived as Weaver, it never holds a stale
+# Receives OTLP/HTTP from the game and forwards everything to Weaver (gRPC only) and to the stack's
+# collector (telemetry/stack), so Jaeger, Prometheus and the log file still get the test session. Being as short-lived as Weaver, it never holds a stale
 # connection to an old live-check container.
 receivers:
   otlp:
@@ -8,34 +8,23 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
 
-processors:
-  # same as in otelcol-lgtm.yaml: Loki drops the OTLP EventName, so copy it into event.name for
-  # lgtm only. Weaver gets the records unchanged (event.name is not in the registry).
-  transform/event_name:
-    log_statements:
-      - set(log.attributes["event.name"], log.event_name) where log.event_name != ""
-
 exporters:
   otlp_grpc/weaver:
     endpoint: weaver-live:4317
     compression: none # Weaver v0.28.0 rejects gzip: "Content is compressed with `gzip` which isn't supported"
     tls:
       insecure: true
-  otlp_http/lgtm:
-    endpoint: http://lgtm:4318
+  otlp_http/stack:
+    endpoint: http://otelcol:4318
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [otlp_grpc/weaver, otlp_http/lgtm]
+      exporters: [otlp_grpc/weaver, otlp_http/stack]
     metrics:
       receivers: [otlp]
-      exporters: [otlp_grpc/weaver, otlp_http/lgtm]
-    logs/weaver:
+      exporters: [otlp_grpc/weaver, otlp_http/stack]
+    logs:
       receivers: [otlp]
-      exporters: [otlp_grpc/weaver]
-    logs/lgtm:
-      receivers: [otlp]
-      processors: [transform/event_name]
-      exporters: [otlp_http/lgtm]
+      exporters: [otlp_grpc/weaver, otlp_http/stack]

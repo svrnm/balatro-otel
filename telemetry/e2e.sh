@@ -2,7 +2,7 @@
 # End-to-end telemetry test: installs the mod, starts Weaver live-check, launches Balatro through
 # BalatroBot, plays one seeded run (autoplay.py), closes the game, then fails on registry
 # violations and lists spans, events and metrics from the registry that never showed up.
-# Needs: the lgtm container (see README), BalatroBot + Steamodded/Lovely installed, uv.
+# Needs: the stack (telemetry/stack, see README), BalatroBot + Steamodded/Lovely installed, uv.
 # Extra args go to `balatrobot serve`; e.g. drop the default --fast for realistic frame timings.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -10,7 +10,7 @@ SEED=${SEED:-OTELTEST}
 SERVE_ARGS=("${@:---fast}")
 LOG=telemetry/live-check-report/balatrobot.log
 
-docker inspect -f '{{.State.Running}}' lgtm >/dev/null 2>&1 || { echo "lgtm container is not running (see README)"; exit 1; }
+docker inspect -f '{{.State.Running}}' otelcol >/dev/null 2>&1 || { echo "the stack is not running: docker compose -f telemetry/stack/compose.yaml up -d"; exit 1; }
 cp mod/otel-trace/*.lua mod/otel-trace/otel-trace.json "$HOME/Library/Application Support/Balatro/Mods/otel-trace/"
 telemetry/live-check.sh start
 
