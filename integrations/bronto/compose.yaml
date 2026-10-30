@@ -1,0 +1,12 @@
+# Add Bronto to the local stack: the stack's collector also exports to Bronto.
+#   BRONTO_API_KEY=... BRONTO_REGION=eu docker compose \
+#     -f telemetry/stack/compose.yaml -f integrations/bronto/compose.yaml up -d
+# Paths here resolve against the first file's folder (telemetry/stack).
+services:
+  otelcol:
+    command: ["--config=/etc/otelcol/otelcol.yaml", "--config=/etc/otelcol/bronto.yaml"]
+    volumes:
+      - ../../integrations/bronto/otelcol-bronto.yaml:/etc/otelcol/bronto.yaml:ro
+    environment:
+      BRONTO_API_KEY: ${BRONTO_API_KEY:?set BRONTO_API_KEY to a Bronto ingestion key}
+      BRONTO_REGION: ${BRONTO_REGION:-eu}

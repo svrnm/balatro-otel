@@ -1,0 +1,19 @@
+# Collector overlay for telemetry/stack/otelcol.yaml: additionally sends everything to Bronto over
+# OTLP/HTTP. Bronto files the data by service.name ("balatro"): logs and events into the logs dataset,
+# spans into the traces dataset, metrics into its metrics store.
+# Used by compose.yaml in this folder; needs BRONTO_API_KEY (an ingestion key) and BRONTO_REGION (eu or us).
+exporters:
+  otlp_http/bronto:
+    endpoint: https://ingestion.${env:BRONTO_REGION}.bronto.io
+    headers:
+      X-BRONTO-API-KEY: ${env:BRONTO_API_KEY}
+
+# Collector config merging replaces lists, so each pipeline lists the stack's exporter again.
+service:
+  pipelines:
+    traces:
+      exporters: [otlp_grpc/jaeger, otlp_http/bronto]
+    metrics:
+      exporters: [otlp_http/prometheus, otlp_http/bronto]
+    logs:
+      exporters: [file/logs, otlp_http/bronto]

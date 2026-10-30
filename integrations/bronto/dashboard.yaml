@@ -1,7 +1,7 @@
 # Bronto dashboard for the otel-trace mod (names: telemetry/registry). Needs bronto-cli >= 0.9.0:
-#   bronto dashboards validate -f telemetry/bronto/dashboard.yaml --live
-#   bronto dashboards apply -f telemetry/bronto/dashboard.yaml --dry-run
-#   bronto dashboards apply -f telemetry/bronto/dashboard.yaml
+#   bronto dashboards validate -f integrations/bronto/dashboard.yaml --live
+#   bronto dashboards apply -f integrations/bronto/dashboard.yaml --dry-run
+#   bronto dashboards apply -f integrations/bronto/dashboard.yaml
 # Datasets: .traces/balatro (spans), default/balatro (log records and events), and the OTLP
 # metrics store (from_expr: metric_name IN (...)). Booleans are stored as strings: = 'true'.
 name: Balatro

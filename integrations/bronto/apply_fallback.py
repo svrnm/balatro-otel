@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build telemetry/bronto/dashboard.yaml in Bronto without `bronto dashboards apply`.
+"""Build integrations/bronto/dashboard.yaml in Bronto without `bronto dashboards apply`.
 
 Fallback for when `apply` cannot run: it reads every widget in the org (GET /widgets), and that list
 returned 500 for this org on 2026-10-28. This does what apply does, with the installed `bronto`
@@ -9,7 +9,7 @@ ownership tags), so a later real `bronto dashboards apply -f dashboard.yaml` ado
 
 Run it once, on a dashboard without apply-managed widgets: it detaches the dashboard's current
 widgets (prints their ids) and attaches new ones. Once GET /widgets works again, use apply.
-Usage: apply_fallback.py [telemetry/bronto/dashboard.yaml]
+Usage: apply_fallback.py [integrations/bronto/dashboard.yaml]
 """
 import json
 import re
@@ -74,7 +74,7 @@ def tag(entity, entity_id, name, value):
 
 
 def main():
-    path = sys.argv[1] if len(sys.argv) > 1 else "telemetry/bronto/dashboard.yaml"
+    path = sys.argv[1] if len(sys.argv) > 1 else "integrations/bronto/dashboard.yaml"
     manifest = json.loads(subprocess.run(["yq", "-o=json", ".", path], capture_output=True, text=True, check=True).stdout)
 
     dashboards = [d for d in bronto("GET", "/dashboards").get("dashboards", []) if d["name"] == manifest["name"]]

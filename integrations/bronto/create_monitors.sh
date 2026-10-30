@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Create the Balatro monitors in telemetry/bronto/monitors/*.json (muted until you unmute them with
+# Create the Balatro monitors in integrations/bronto/monitors/*.json (muted until you unmute them with
 # `bronto monitors mute <id> --unmute`), each notifying one email address.
 # The monitors query datasets by id: set BRONTO_LOGS_DATASET_ID (the logs dataset, e.g. default/balatro)
 # and BRONTO_TRACES_DATASET_ID (e.g. .traces/balatro); `bronto datasets list` shows the ids.
-# Usage: telemetry/bronto/create_monitors.sh you@example.com
+# Usage: integrations/bronto/create_monitors.sh you@example.com
 set -euo pipefail
 email=${1:?usage: $0 <email for notifications>}
 : "${BRONTO_LOGS_DATASET_ID:?set BRONTO_LOGS_DATASET_ID}" "${BRONTO_TRACES_DATASET_ID:?set BRONTO_TRACES_DATASET_ID}"
