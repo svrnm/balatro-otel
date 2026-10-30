@@ -1,0 +1,23 @@
+{
+  "name": "Balatro: mod errors",
+  "description": "ERROR or FATAL log records from Steamodded's logger (any mod), linked to the span that was open.",
+  "threshold": 0,
+  "comparison_operator": "ABOVE",
+  "window": "Last 15 minutes",
+  "queries": [
+    {
+      "name": "mod_errors",
+      "select": [
+        "COUNT(*)"
+      ],
+      "from": [
+        "BRONTO_LOGS_DATASET_ID"
+      ],
+      "where": "\"$severity_text\" IN ('ERROR', 'FATAL') AND \"$event.name\" IS NULL"
+    }
+  ],
+  "monitor_type": "PATTERN",
+  "type": "PATTERN",
+  "formulas": [],
+  "mute_until": -1
+}

@@ -1,0 +1,77 @@
+# Weaver project config for `weaver registry live-check` (see README).
+# Matchers describe the telemetry the mod emits, so live-check can pair each sample with its
+# definition in ./registry.
+
+[live-check]
+fail_on = "violation"
+
+# Every signal in the registry is still `development`; reporting that on each sample is noise.
+[[live-check.finding_filters]]
+exclude = ["not_stable"]
+
+# Span names are static and equal the span type in the registry, so the name is the signature.
+[[live-check.matchers]]
+id = "match.span.run"
+sample_type = "span"
+when = 'name == "balatro.run"'
+signal = "balatro.run"
+
+[[live-check.matchers]]
+id = "match.span.blind"
+sample_type = "span"
+when = 'name == "balatro.blind"'
+signal = "balatro.blind"
+
+[[live-check.matchers]]
+id = "match.span.hand"
+sample_type = "span"
+when = 'name == "balatro.hand"'
+signal = "balatro.hand"
+
+[[live-check.matchers]]
+id = "match.span.hand_scoring"
+sample_type = "span"
+when = 'name == "balatro.hand.scoring"'
+signal = "balatro.hand.scoring"
+
+[[live-check.matchers]]
+id = "match.span.card_evaluate"
+sample_type = "span"
+when = 'name == "balatro.card.evaluate"'
+signal = "balatro.card.evaluate"
+
+[[live-check.matchers]]
+id = "match.span.shop"
+sample_type = "span"
+when = 'name == "balatro.shop"'
+signal = "balatro.shop"
+
+[[live-check.matchers]]
+id = "match.span.booster_pack"
+sample_type = "span"
+when = 'name == "balatro.booster_pack"'
+signal = "balatro.booster_pack"
+
+[[live-check.matchers]]
+id = "match.resource"
+sample_type = "resource"
+when = '"service.name" in attributes && attributes["service.name"] == "balatro"'
+strict_attribute_groups = ["balatro.resource"]
+
+# session.id and balatro.run.seed are on every log record, events included.
+[[live-check.matchers]]
+id = "match.log.common"
+sample_type = "log"
+attribute_groups = ["balatro.common"]
+
+[[live-check.matchers]]
+id = "match.log.app_jank"
+sample_type = "log"
+when = 'event_name == "app.jank"'
+attribute_groups = ["balatro.app.jank"]
+
+[[live-check.matchers]]
+id = "match.log.app_crash"
+sample_type = "log"
+when = 'event_name == "app.crash"'
+attribute_groups = ["balatro.app.crash"]

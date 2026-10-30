@@ -1,0 +1,121 @@
+file_format: definition/2
+
+# Events are log records with an event name, correlated to the span that was open
+# (OTEP 4430: log-based events instead of span events). session.id and balatro.run.seed are on
+# every record (attribute group balatro.common).
+#
+# Upstream events used as-is: session.start (once per launch), app.jank (one per frame slower than
+# 0.1 s, plus the balatro.app.jank group), app.crash (plus the balatro.app.crash group).
+
+imports:
+  events:
+    - session.start
+    - app.crash
+    - app.jank
+
+events:
+  - name: balatro.effect
+    stability: development
+    requirement_level: recommended
+    brief: A scoring effect changed chips, mult or money while a hand was scored.
+    attributes:
+      - ref: balatro.effect.key
+        requirement_level: required
+      - ref: balatro.effect.amount
+        requirement_level: required
+      - ref: balatro.effect.source
+        requirement_level: recommended
+      - ref: balatro.score.chips
+        requirement_level: recommended
+      - ref: balatro.score.mult
+        requirement_level: recommended
+
+  - name: balatro.discard
+    stability: development
+    requirement_level: recommended
+    brief: Cards were discarded.
+    attributes:
+      - ref: balatro.discard.card_count
+        requirement_level: required
+
+  - name: balatro.blind.skip
+    stability: development
+    requirement_level: recommended
+    brief: A blind was skipped (for its tag).
+    attributes:
+      - ref: balatro.blind.slot
+        requirement_level: required
+      - ref: balatro.ante
+        requirement_level: recommended
+
+  - name: balatro.shop.reroll
+    stability: development
+    requirement_level: recommended
+    brief: The shop was rerolled.
+    attributes:
+      - ref: balatro.shop.reroll_cost
+        requirement_level: recommended
+      - ref: balatro.dollars
+        requirement_level: recommended
+
+  - name: balatro.card.buy
+    stability: development
+    requirement_level: recommended
+    brief: A card was bought from the shop.
+    attributes:
+      - ref: balatro.card.name
+        requirement_level: required
+      - ref: balatro.card.key
+        requirement_level: recommended
+      - ref: balatro.card.set
+        requirement_level: recommended
+      - ref: balatro.card.cost
+        requirement_level: recommended
+      - ref: balatro.shop.buy_and_use
+        requirement_level: recommended
+      - ref: balatro.dollars
+        requirement_level: recommended
+
+  - name: balatro.card.sell
+    stability: development
+    requirement_level: recommended
+    brief: A card was sold.
+    attributes:
+      - ref: balatro.card.name
+        requirement_level: required
+      - ref: balatro.card.key
+        requirement_level: recommended
+      - ref: balatro.card.set
+        requirement_level: recommended
+      - ref: balatro.card.sell_value
+        requirement_level: recommended
+      - ref: balatro.dollars
+        requirement_level: recommended
+
+  - name: balatro.card.use
+    stability: development
+    requirement_level: recommended
+    brief: A consumable was used, or a card was picked from a booster pack.
+    attributes:
+      - ref: balatro.card.name
+        requirement_level: required
+      - ref: balatro.card.key
+        requirement_level: recommended
+      - ref: balatro.card.set
+        requirement_level: recommended
+      - ref: balatro.dollars
+        requirement_level: recommended
+
+  - name: balatro.card.redeem
+    stability: development
+    requirement_level: recommended
+    brief: A voucher was redeemed.
+    attributes:
+      - ref: balatro.card.name
+        requirement_level: required
+      - ref: balatro.card.key
+        requirement_level: recommended
+      - ref: balatro.card.set
+        requirement_level: recommended
+      - ref: balatro.dollars
+        requirement_level: recommended

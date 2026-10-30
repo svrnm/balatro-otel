@@ -1,0 +1,79 @@
+file_format: definition/2
+
+# Attribute sets that are not tied to one signal. live-check compares resources, logs without an
+# event name, and the extra attributes on the upstream app.jank/app.crash events against these
+# groups (see telemetry/.weaver.toml matchers).
+
+attribute_groups:
+  - id: balatro.resource
+    visibility: public
+    stability: development
+    brief: Resource attributes of the game process (one per launch).
+    attributes:
+      - ref: service.name
+        requirement_level: required
+        examples: ['balatro']
+      - ref: service.version
+        requirement_level: recommended
+        note: The Balatro game version.
+        examples: ['1.0.1o-FULL']
+      - ref: service.instance.id
+        requirement_level: recommended
+        note: Random UUID per launch; the same value as session.id.
+      - ref: telemetry.sdk.name
+        requirement_level: required
+        examples: ['balatro-otel-trace']
+      - ref: telemetry.sdk.language
+        requirement_level: required
+        note: The SDK is the mod's own Lua exporter, so the value is `lua` (not in the upstream enum).
+      - ref: telemetry.sdk.version
+        requirement_level: required
+      - ref: os.type
+        requirement_level: recommended
+      - ref: balatro.smods.version
+      - ref: balatro.renderer.name
+      - ref: balatro.renderer.version
+      - ref: balatro.renderer.vendor
+      - ref: balatro.renderer.device
+      - ref: balatro.display.width
+      - ref: balatro.display.height
+      - ref: balatro.display.dpi_scale
+      - ref: balatro.settings.vsync
+      - ref: balatro.settings.screen_mode
+      - ref: balatro.settings.texture_scaling
+      - ref: balatro.settings.shadows
+      - ref: balatro.settings.crt
+      - ref: balatro.settings.bloom
+
+  - id: balatro.common
+    visibility: public
+    stability: development
+    brief: Attributes on every span and log record.
+    attributes:
+      - ref: session.id
+        requirement_level: recommended
+        note: One session per game launch.
+      - ref: balatro.run.seed
+        requirement_level:
+          conditionally_required: While a run is in progress.
+
+  - id: balatro.app.jank
+    visibility: public
+    stability: development
+    brief: What the game was doing in a janky frame; added to the upstream app.jank event.
+    attributes:
+      - ref: balatro.game.state
+      - ref: balatro.frame.update.duration
+      - ref: balatro.frame.draw.duration
+      - ref: balatro.frame.other.duration
+      - ref: balatro.render.draw_calls
+      - ref: balatro.event_queue.length
+      - ref: balatro.lua.memory.used
+
+  - id: balatro.app.crash
+    visibility: public
+    stability: development
+    brief: Game context of a crash; added to the upstream app.crash event.
+    attributes:
+      - ref: balatro.game.state
+      - ref: balatro.lua.memory.used

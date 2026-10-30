@@ -1,0 +1,434 @@
+file_format: definition/2
+
+# Upstream attributes used as-is (not redeclared): service.*, service.instance.id, telemetry.sdk.*,
+# os.type, session.id, exception.*, error.type, app.jank.*, app.crash.id.
+
+attributes:
+  # --- Resource: engine, renderer, display and settings --------------------------------------
+  - key: balatro.smods.version
+    type: string
+    stability: development
+    brief: Steamodded (mod loader) version.
+    examples: ['1.0.0~BETA-0521a']
+  - key: balatro.renderer.name
+    type: string
+    stability: development
+    brief: Graphics API used by LÖVE.
+    examples: ['OpenGL', 'Metal', 'Vulkan']
+  - key: balatro.renderer.version
+    type: string
+    stability: development
+    brief: Graphics API version string reported by the driver.
+    examples: ['4.1 Metal - 89.3']
+  - key: balatro.renderer.vendor
+    type: string
+    stability: development
+    brief: GPU vendor reported by the driver.
+    examples: ['Apple', 'NVIDIA Corporation']
+  - key: balatro.renderer.device
+    type: string
+    stability: development
+    brief: GPU model reported by the driver.
+    examples: ['Apple M1']
+  - key: balatro.display.width
+    type: int
+    stability: development
+    brief: Window width in pixels at startup.
+    examples: [1920]
+  - key: balatro.display.height
+    type: int
+    stability: development
+    brief: Window height in pixels at startup.
+    examples: [1080]
+  - key: balatro.display.dpi_scale
+    type: double
+    stability: development
+    brief: Pixel density scale of the window.
+    examples: [2.0]
+  - key: balatro.settings.vsync
+    type: int
+    stability: development
+    brief: Vsync setting (0 off, 1 on).
+    examples: [1]
+  - key: balatro.settings.screen_mode
+    type: string
+    stability: development
+    brief: Window mode setting.
+    examples: ['Borderless', 'Fullscreen', 'Windowed']
+  - key: balatro.settings.texture_scaling
+    type: int
+    stability: development
+    brief: Texture scaling setting (1 or 2).
+    examples: [2]
+  - key: balatro.settings.shadows
+    type: string
+    stability: development
+    brief: Shadows setting.
+    examples: ['On', 'Off']
+  - key: balatro.settings.crt
+    type: double
+    stability: development
+    brief: CRT effect strength setting (0-100).
+    examples: [70]
+  - key: balatro.settings.bloom
+    type: int
+    stability: development
+    brief: Bloom setting.
+    examples: [1]
+
+  # --- Run ------------------------------------------------------------------------------------
+  - key: balatro.run.seed
+    type: string
+    stability: development
+    brief: Seed of the current run; set on every span and log record started during a run.
+    examples: ['7LB2WVPK']
+  - key: balatro.run.resumed
+    type: boolean
+    stability: development
+    brief: Whether the run was continued from a save rather than started fresh.
+  - key: balatro.run.won
+    type: boolean
+    stability: development
+    brief: Whether the run reached the winning ante (endless play may continue afterwards).
+  - key: balatro.run.outcome
+    type:
+      members:
+        - id: lost
+          stability: development
+          brief: Game over.
+        - id: abandoned
+          stability: development
+          brief: Left to the main menu, or a new run was started, before game over.
+    stability: development
+    brief: How the run ended.
+  - key: balatro.deck.name
+    type: string
+    stability: development
+    brief: Name of the deck (back) used for the run.
+    examples: ['Red Deck', 'Plasma Deck']
+  - key: balatro.stake
+    type: int
+    stability: development
+    brief: Stake level of the run (1 = White Stake).
+    examples: [1, 8]
+  - key: balatro.ante
+    type: int
+    stability: development
+    brief: Current ante.
+    examples: [1, 8]
+  - key: balatro.round
+    type: int
+    stability: development
+    brief: Current round number within the run.
+    examples: [3]
+  - key: balatro.dollars
+    type: int
+    stability: development
+    brief: Money the player has at the time of recording.
+    examples: [4, 25]
+  - key: balatro.game.state
+    type: string
+    stability: development
+    brief: Name of the game's state machine state (key of G.STATES).
+    examples: ['SELECTING_HAND', 'SHOP', 'BLIND_SELECT', 'HAND_PLAYED']
+
+  # --- Blind ----------------------------------------------------------------------------------
+  - key: balatro.blind.name
+    type: string
+    stability: development
+    brief: Name of the blind.
+    examples: ['Small Blind', 'The Hook']
+  - key: balatro.blind.slot
+    type:
+      members:
+        - id: small
+          value: Small
+          stability: development
+          brief: Small blind.
+        - id: big
+          value: Big
+          stability: development
+          brief: Big blind.
+        - id: boss
+          value: Boss
+          stability: development
+          brief: Boss blind.
+    stability: development
+    brief: Which of the ante's three blinds this is.
+  - key: balatro.blind.target
+    type: double
+    stability: development
+    brief: Score needed to beat the blind.
+    examples: [300]
+  - key: balatro.blind.score
+    type: double
+    stability: development
+    brief: Score reached when the blind ended.
+    examples: [524]
+  - key: balatro.blind.won
+    type: boolean
+    stability: development
+    brief: Whether the blind was beaten.
+
+  # --- Hand and scoring -----------------------------------------------------------------------
+  - key: balatro.hand.type
+    type: string
+    stability: development
+    brief: Poker hand that was played.
+    examples: ['Flush', 'Two Pair', 'High Card']
+  - key: balatro.hand.card_count
+    type: int
+    stability: development
+    brief: Number of cards played.
+    examples: [5]
+  - key: balatro.hand.chips
+    type: double
+    stability: development
+    brief: Final chips of the hand.
+    examples: [75]
+  - key: balatro.hand.mult
+    type: double
+    stability: development
+    brief: Final mult of the hand.
+    examples: [4]
+  - key: balatro.hand.score
+    type: double
+    stability: development
+    brief: Score the hand added to the blind, floor(chips × mult) as the game counts it.
+    note: >
+      Like every double attribute of this registry, left out when the value does not fit a double
+      (e.g. Talisman's big numbers).
+    examples: [300]
+  - key: balatro.hand.blind_score_added
+    type: double
+    stability: development
+    brief: How much the blind's score actually rose from the start of the hand to the end of its animation.
+    note: >
+      Normally equal to balatro.hand.score; a difference means the game added or removed score
+      outside the hand's own calculation.
+    examples: [300]
+  - key: balatro.score.chips
+    type: double
+    stability: development
+    brief: Running chips while a hand is being scored.
+    examples: [40]
+  - key: balatro.score.mult
+    type: double
+    stability: development
+    brief: Running mult while a hand is being scored.
+    examples: [6]
+  - key: balatro.effect.key
+    type: string
+    stability: development
+    brief: Kind of scoring effect applied.
+    examples: ['chips', 'mult', 'x_mult', 'dollars']
+  - key: balatro.effect.amount
+    type: double
+    stability: development
+    brief: Amount of the scoring effect.
+    examples: [4, 1.5]
+  - key: balatro.effect.source
+    type: string
+    stability: development
+    brief: Card or joker that produced the effect.
+    examples: ['Greedy Joker', 'Jack of Diamonds']
+  - key: balatro.discard.card_count
+    type: int
+    stability: development
+    brief: Number of cards discarded.
+    examples: [3]
+
+  # --- Cards, shop and packs ------------------------------------------------------------------
+  - key: balatro.card.name
+    type: string
+    stability: development
+    brief: Display name of a card; "<rank> of <suit>" for playing cards.
+    examples: ['Greedy Joker', 'Jack of Diamonds', 'The Fool']
+  - key: balatro.card.key
+    type: string
+    stability: development
+    brief: Internal key of the card's center.
+    examples: ['j_greedy_joker', 'c_base', 'p_arcana_normal_1']
+  - key: balatro.card.set
+    type: string
+    stability: development
+    brief: Card set.
+    examples: ['Joker', 'Tarot', 'Planet', 'Default', 'Enhanced', 'Voucher', 'Booster']
+  - key: balatro.card.area
+    type:
+      members:
+        - id: jokers
+          stability: development
+          brief: Joker slots.
+        - id: play
+          stability: development
+          brief: Played cards.
+        - id: hand
+          stability: development
+          brief: Cards held in hand.
+        - id: other
+          stability: development
+          brief: Any other card area.
+    stability: development
+    brief: Where the card sits.
+  - key: balatro.card.cost
+    type: int
+    stability: development
+    brief: Price paid for the card.
+    examples: [5]
+  - key: balatro.card.sell_value
+    type: int
+    stability: development
+    brief: Money received for selling the card.
+    examples: [2]
+  - key: balatro.card.action
+    type:
+      members:
+        - id: buy
+          stability: development
+          brief: Bought from the shop.
+        - id: sell
+          stability: development
+          brief: Sold.
+        - id: use
+          stability: development
+          brief: Used (consumable) or picked from a booster pack.
+        - id: redeem
+          stability: development
+          brief: Voucher redeemed.
+    stability: development
+    brief: What the player did with a card.
+  - key: balatro.card.evaluation.context
+    type: string
+    stability: development
+    brief: Comma-separated scoring context flags the card was evaluated in.
+    examples: ['cardarea,joker_main', 'individual,main_scoring']
+  - key: balatro.card.effect
+    type: template[double]
+    stability: development
+    brief: Numeric effects returned by a card evaluation, `<key>` being "<source>.<effect>".
+    note: For example `balatro.card.effect.jokers.mult_mod` = 4 for a joker adding 4 mult.
+    examples: [4, 1.5]
+  - key: balatro.shop.reroll_cost
+    type: int
+    stability: development
+    brief: Price of the reroll.
+    examples: [5]
+  - key: balatro.shop.buy_and_use
+    type: boolean
+    stability: development
+    brief: Whether the card was bought and used immediately.
+  - key: balatro.booster_pack.skipped
+    type: boolean
+    stability: development
+    brief: Whether the booster pack was skipped without picking a card.
+
+  # --- Frames and rendering -------------------------------------------------------------------
+  - key: balatro.frame.count
+    type: int
+    stability: development
+    brief: Frames rendered during the span.
+    examples: [3600]
+  - key: balatro.frame.average_rate
+    type: double
+    stability: development
+    brief: Average frames per second during the span.
+    examples: [59.8]
+  - key: balatro.frame.max_duration
+    type: double
+    stability: development
+    brief: Longest frame during the span, in seconds.
+    examples: [0.034]
+  - key: balatro.frame.jank_count
+    type: int
+    stability: development
+    brief: Frames during the span that exceeded the jank threshold.
+    examples: [2]
+  - key: balatro.frame.update.duration
+    type: double
+    stability: development
+    brief: CPU time of the game update in the frame, in seconds.
+    examples: [0.004]
+  - key: balatro.frame.update.average_duration
+    type: double
+    stability: development
+    brief: Average update time per frame during the span, in seconds.
+    examples: [0.002]
+  - key: balatro.frame.update.max_duration
+    type: double
+    stability: development
+    brief: Longest update during the span, in seconds.
+    examples: [0.012]
+  - key: balatro.frame.draw.duration
+    type: double
+    stability: development
+    brief: CPU time spent submitting draw commands in the frame, in seconds (excludes GPU time).
+    examples: [0.006]
+  - key: balatro.frame.draw.average_duration
+    type: double
+    stability: development
+    brief: Average draw time per frame during the span, in seconds.
+    examples: [0.005]
+  - key: balatro.frame.draw.max_duration
+    type: double
+    stability: development
+    brief: Longest draw during the span, in seconds.
+    examples: [0.009]
+  - key: balatro.frame.other.duration
+    type: double
+    stability: development
+    brief: Frame time outside update and draw (GPU, vsync wait, garbage collection), in seconds.
+    examples: [0.2]
+  - key: balatro.lua.memory.used
+    type: int
+    stability: development
+    brief: Memory used by the Lua heap, in bytes.
+    examples: [104857600]
+  - key: balatro.lua.memory.max_used
+    type: int
+    stability: development
+    brief: Peak Lua heap during the span, in bytes.
+    examples: [134217728]
+  - key: balatro.lua.memory.live
+    type: int
+    stability: development
+    brief: Lua heap right after a full garbage collection at run start, in bytes.
+    note: >
+      Sampled memory includes garbage the incremental collector has not freed yet; this is the
+      live heap. A leak shows as this value rising from run to run within a session.
+    examples: [10485760]
+  - key: balatro.event_queue.length
+    type: int
+    stability: development
+    brief: Pending events (mostly animations) in the game's base event queue.
+    examples: [12]
+  - key: balatro.event_queue.max_length
+    type: int
+    stability: development
+    brief: Longest base event queue during the span.
+    examples: [40]
+  - key: balatro.render.draw_calls
+    type: int
+    stability: development
+    brief: Draw calls in the frame.
+    examples: [350]
+  - key: balatro.render.max_draw_calls
+    type: int
+    stability: development
+    brief: Most draw calls in a frame during the span.
+    examples: [480]
+  - key: balatro.render.max_canvas_switches
+    type: int
+    stability: development
+    brief: Most canvas switches in a frame during the span.
+    examples: [12]
+  - key: balatro.render.max_shader_switches
+    type: int
+    stability: development
+    brief: Most shader switches in a frame during the span.
+    examples: [90]
+  - key: balatro.render.max_texture_memory
+    type: int
+    stability: development
+    brief: Peak texture memory during the span, in bytes.
+    examples: [268435456]

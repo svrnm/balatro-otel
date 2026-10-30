@@ -1,0 +1,144 @@
+file_format: definition/2
+
+# Counters and histograms are cumulative since game launch; gauges are sampled every 10 s.
+
+metrics:
+  - name: balatro.frame.duration
+    instrument: histogram
+    unit: s
+    stability: development
+    requirement_level: recommended
+    brief: Wall time of a frame (update, draw, present and vsync wait).
+
+  - name: balatro.frame.update.duration
+    instrument: histogram
+    unit: s
+    stability: development
+    requirement_level: recommended
+    brief: CPU time of the game update per frame.
+
+  - name: balatro.frame.draw.duration
+    instrument: histogram
+    unit: s
+    stability: development
+    requirement_level: recommended
+    brief: CPU time spent submitting draw commands per frame (excludes GPU time).
+
+  - name: balatro.frame.janks
+    instrument: counter
+    unit: "{frame}"
+    stability: development
+    requirement_level: recommended
+    brief: Frames that exceeded the jank threshold (0.1 s).
+    attributes:
+      - ref: balatro.game.state
+        requirement_level: recommended
+
+  - name: balatro.frame.rate
+    instrument: gauge
+    unit: "{frame}/s"
+    stability: development
+    requirement_level: recommended
+    brief: Frames per second as reported by LÖVE.
+
+  - name: balatro.lua.memory.used
+    instrument: gauge
+    unit: By
+    stability: development
+    requirement_level: recommended
+    brief: Memory used by the Lua heap.
+
+  - name: balatro.event_queue.length
+    instrument: gauge
+    unit: "{event}"
+    stability: development
+    requirement_level: recommended
+    brief: Pending events (mostly animations) in the game's base event queue.
+
+  - name: balatro.render.draw_calls
+    instrument: gauge
+    unit: "{call}"
+    stability: development
+    requirement_level: recommended
+    brief: Draw calls in the last frame.
+
+  - name: balatro.render.canvas_switches
+    instrument: gauge
+    unit: "{switch}"
+    stability: development
+    requirement_level: recommended
+    brief: Canvas switches in the last frame.
+
+  - name: balatro.render.shader_switches
+    instrument: gauge
+    unit: "{switch}"
+    stability: development
+    requirement_level: recommended
+    brief: Shader switches in the last frame.
+
+  - name: balatro.render.texture_memory.used
+    instrument: gauge
+    unit: By
+    stability: development
+    requirement_level: recommended
+    brief: Estimated texture memory in use.
+
+  - name: balatro.dollars
+    instrument: gauge
+    unit: "{dollar}"
+    stability: development
+    requirement_level: recommended
+    brief: Money the player has; only recorded during a run.
+
+  - name: balatro.ante
+    instrument: gauge
+    unit: "{ante}"
+    stability: development
+    requirement_level: recommended
+    brief: Current ante; only recorded during a run.
+
+  - name: balatro.hands
+    instrument: counter
+    unit: "{hand}"
+    stability: development
+    requirement_level: recommended
+    brief: Hands played.
+    attributes:
+      - ref: balatro.hand.type
+        requirement_level: recommended
+
+  - name: balatro.score
+    instrument: counter
+    unit: "{chip}"
+    stability: development
+    requirement_level: recommended
+    brief: Total score of all hands played (hands whose score exceeds a double are skipped).
+
+  - name: balatro.blinds
+    instrument: counter
+    unit: "{blind}"
+    stability: development
+    requirement_level: recommended
+    brief: Blinds finished.
+    attributes:
+      - ref: balatro.blind.won
+        requirement_level: recommended
+
+  - name: balatro.card.actions
+    instrument: counter
+    unit: "{action}"
+    stability: development
+    requirement_level: recommended
+    brief: Cards bought, sold, used or redeemed.
+    attributes:
+      - ref: balatro.card.action
+        requirement_level: required
+      - ref: balatro.card.set
+        requirement_level: recommended
+
+  - name: balatro.crashes
+    instrument: counter
+    unit: "{crash}"
+    stability: development
+    requirement_level: recommended
+    brief: Crashes (unrecoverable Lua errors).

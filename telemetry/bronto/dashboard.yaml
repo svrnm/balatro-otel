@@ -1,0 +1,242 @@
+# Bronto dashboard for the otel-trace mod (names: telemetry/registry). Needs bronto-cli >= 0.9.0:
+#   bronto dashboards validate -f telemetry/bronto/dashboard.yaml --live
+#   bronto dashboards apply -f telemetry/bronto/dashboard.yaml --dry-run
+#   bronto dashboards apply -f telemetry/bronto/dashboard.yaml
+# Datasets: .traces/balatro (spans), default/balatro (log records and events), and the OTLP
+# metrics store (from_expr: metric_name IN (...)). Booleans are stored as strings: = 'true'.
+name: Balatro
+tags: {source: otel-trace}
+widgets:
+  # --- Overview ---------------------------------------------------------------------------------
+  - name: Runs
+    type: score
+    queries:
+      - dataset: .traces/balatro
+        select: count(*)
+        where: $span.name = 'balatro.run'
+  - name: Hands played
+    type: score
+    queries:
+      - dataset: .traces/balatro
+        select: count(*)
+        where: $span.name = 'balatro.hand'
+  - name: Blinds won
+    type: score
+    queries:
+      - dataset: .traces/balatro
+        select: count(*)
+        where: $span.name = 'balatro.blind' AND $balatro.blind.won = 'true'
+  - name: Blinds lost
+    type: score
+    queries:
+      - dataset: .traces/balatro
+        select: count(*)
+        where: $span.name = 'balatro.blind' AND $balatro.blind.won = 'false'
+  - name: Crashes
+    type: score
+    queries:
+      - dataset: default/balatro
+        select: count(*)
+        where: $event.name = 'app.crash'
+  - name: Janky frames
+    type: score
+    queries:
+      - dataset: default/balatro
+        select: count(*)
+        where: $event.name = 'app.jank'
+
+  # --- Game -------------------------------------------------------------------------------------
+  - name: Hands by type
+    type: top-list
+    queries:
+      - dataset: .traces/balatro
+        select: count(*)
+        where: $span.name = 'balatro.hand'
+        group_by: [$balatro.hand.type]
+  - name: Run outcomes
+    type: pie
+    queries:
+      - dataset: .traces/balatro
+        select: count(*)
+        where: $span.name = 'balatro.run'
+        group_by: [$balatro.run.outcome]
+  - name: Hand score
+    type: line
+    queries:
+      - name: average
+        dataset: .traces/balatro
+        select: $balatro.hand.score
+        agg: avg
+        where: $span.name = 'balatro.hand'
+      - name: best
+        dataset: .traces/balatro
+        select: $balatro.hand.score
+        agg: max
+        where: $span.name = 'balatro.hand'
+  - name: Blinds played
+    type: top-list
+    queries:
+      - dataset: .traces/balatro
+        select: count(*)
+        where: $span.name = 'balatro.blind'
+        group_by: [$balatro.blind.name]
+  - name: Card actions
+    type: top-list
+    queries:
+      - dataset: default/balatro
+        select: count(*)
+        where: $event.name LIKE 'balatro.card.%'
+        group_by: [$event.name, $balatro.card.set]
+  - name: Money
+    type: line
+    queries:
+      - from_expr: metric_name IN ('balatro.dollars')
+        select: avg(value)
+
+  # --- Errors & crashes -------------------------------------------------------------------------
+  - name: Crash reports
+    type: events-list
+    queries:
+      - dataset: default/balatro
+        select: count(*)
+        where: $event.name = 'app.crash'
+  - name: Mod errors & warnings
+    type: events-list
+    queries:
+      - dataset: default/balatro
+        select: count(*)
+        where: $severity_text IN ('ERROR', 'FATAL', 'WARN') AND $event.name IS NULL
+  - name: Warnings and errors over time
+    type: bar
+    queries:
+      - dataset: default/balatro
+        select: count(*)
+        where: $severity_text IN ('ERROR', 'FATAL', 'WARN')
+        group_by: [$severity_text]
+  - name: Score mismatches
+    type: events-list
+    queries:
+      # hands whose blind gained a different amount than they scored (e.g. debuffed hands on The Mouth)
+      - dataset: .traces/balatro
+        select: count(*)
+        where: $span.name = 'balatro.hand' AND $balatro.hand.blind_score_added != $balatro.hand.score
+  - name: Failed spans
+    type: bar
+    queries:
+      - dataset: .traces/balatro
+        select: count(*)
+        where: $span.status_code = 'STATUS_CODE_ERROR'
+        group_by: [$span.name]
+
+  # --- Performance ------------------------------------------------------------------------------
+  - name: Frame time
+    type: line
+    unit: seconds
+    queries:
+      - name: p50
+        from_expr: metric_name IN ('balatro.frame.duration')
+        select: p50(value)
+      - name: p95
+        from_expr: metric_name IN ('balatro.frame.duration')
+        select: p95(value)
+      - name: p99
+        from_expr: metric_name IN ('balatro.frame.duration')
+        select: p99(value)
+  - name: Update vs draw time (p95)
+    type: line
+    unit: seconds
+    queries:
+      - name: update
+        from_expr: metric_name IN ('balatro.frame.update.duration')
+        select: p95(value)
+      - name: draw
+        from_expr: metric_name IN ('balatro.frame.draw.duration')
+        select: p95(value)
+  - name: Janky frames by game state
+    type: bar
+    queries:
+      - dataset: default/balatro
+        select: count(*)
+        where: $event.name = 'app.jank'
+        group_by: [$balatro.game.state]
+  - name: FPS
+    type: line
+    queries:
+      - from_expr: metric_name IN ('balatro.frame.rate')
+        select: avg(value)
+  - name: Lua memory
+    type: line
+    unit: bytes
+    queries:
+      - name: sampled
+        from_expr: metric_name IN ('balatro.lua.memory.used')
+        select: avg(value)
+      - name: live_at_run_start
+        dataset: .traces/balatro
+        select: $balatro.lua.memory.live
+        agg: max
+        where: $span.name = 'balatro.run'
+  - name: Animation queue
+    type: line
+    queries:
+      - from_expr: metric_name IN ('balatro.event_queue.length')
+        select: max(value)
+  - name: Slowest card evaluations
+    type: top-list
+    unit: nanoseconds
+    queries:
+      # max, not p95: a percentile grouped by card name returns 500 from the API (2026-10-28)
+      - dataset: .traces/balatro
+        select: $span.duration_nano
+        agg: max
+        where: $span.name = 'balatro.card.evaluate'
+        group_by: [$balatro.card.name]
+  - name: Hand scoring time
+    type: line
+    unit: nanoseconds
+    queries:
+      - name: p50
+        dataset: .traces/balatro
+        select: p50($span.duration_nano)
+        where: $span.name = 'balatro.hand.scoring'
+      - name: p95
+        dataset: .traces/balatro
+        select: p95($span.duration_nano)
+        where: $span.name = 'balatro.hand.scoring'
+  - name: Draw calls
+    type: line
+    queries:
+      - from_expr: metric_name IN ('balatro.render.draw_calls')
+        select: max(value)
+
+layout:
+  # overview: six scores in one row
+  - {widget: Runs, x: 0, y: 0, w: 0.1666, h: 2}
+  - {widget: Hands played, x: 0.1666, y: 0, w: 0.1666, h: 2}
+  - {widget: Blinds won, x: 0.3333, y: 0, w: 0.1666, h: 2}
+  - {widget: Blinds lost, x: 0.5, y: 0, w: 0.1666, h: 2}
+  - {widget: Crashes, x: 0.6666, y: 0, w: 0.1666, h: 2}
+  - {widget: Janky frames, x: 0.8333, y: 0, w: 0.1667, h: 2}
+  # game
+  - {widget: Hands by type, x: 0, y: 2, w: 0.3333, h: 3}
+  - {widget: Run outcomes, x: 0.3333, y: 2, w: 0.3333, h: 3}
+  - {widget: Hand score, x: 0.6666, y: 2, w: 0.3334, h: 3}
+  - {widget: Blinds played, x: 0, y: 5, w: 0.3333, h: 3}
+  - {widget: Card actions, x: 0.3333, y: 5, w: 0.3333, h: 3}
+  - {widget: Money, x: 0.6666, y: 5, w: 0.3334, h: 3}
+  # errors & crashes
+  - {widget: Crash reports, x: 0, y: 8, w: 0.5, h: 4}
+  - {widget: Mod errors & warnings, x: 0.5, y: 8, w: 0.5, h: 4}
+  - {widget: Warnings and errors over time, x: 0, y: 12, w: 0.5, h: 3}
+  - {widget: Failed spans, x: 0.5, y: 12, w: 0.5, h: 3}
+  - {widget: Score mismatches, x: 0, y: 27, w: 1, h: 3}
+  # performance
+  - {widget: Frame time, x: 0, y: 15, w: 0.5, h: 3}
+  - {widget: Update vs draw time (p95), x: 0.5, y: 15, w: 0.5, h: 3}
+  - {widget: Janky frames by game state, x: 0, y: 18, w: 0.5, h: 3}
+  - {widget: FPS, x: 0.5, y: 18, w: 0.5, h: 3}
+  - {widget: Lua memory, x: 0, y: 21, w: 0.5, h: 3}
+  - {widget: Animation queue, x: 0.5, y: 21, w: 0.5, h: 3}
+  - {widget: Slowest card evaluations, x: 0, y: 24, w: 0.3333, h: 3}
+  - {widget: Hand scoring time, x: 0.3333, y: 24, w: 0.3333, h: 3}
+  - {widget: Draw calls, x: 0.6666, y: 24, w: 0.3334, h: 3}

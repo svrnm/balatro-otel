@@ -1,0 +1,10 @@
+# runtime output of the container runner and live-check (logs, reports, screen recordings)
+telemetry/live-check-report/
+# game footage and screenshots: kept locally, not published (see the README's legal notes)
+telemetry/evidence/
+*.mkv
+*.mp4
+
+__pycache__/
+.venv/
+.DS_Store

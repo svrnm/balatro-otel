@@ -1,0 +1,25 @@
+{
+  "name": "Balatro: slow hand scoring",
+  "description": "p95 of the synchronous score calculation per hand above 50 ms (balatro.hand.scoring spans), e.g. heavy retrigger builds or a slow modded joker.",
+  "threshold": 50000000,
+  "comparison_operator": "ABOVE",
+  "window": "Last 15 minutes",
+  "queries": [
+    {
+      "name": "scoring_p95_ns",
+      "select": [
+        "P95(\"$span.duration_nano\")"
+      ],
+      "from": [
+        "BRONTO_TRACES_DATASET_ID"
+      ],
+      "where": "\"$span.name\" = 'balatro.hand.scoring'"
+    }
+  ],
+  "monitor_type": "PATTERN",
+  "type": "PATTERN",
+  "formulas": [],
+  "mute_until": -1,
+  "ai_report_enabled": true,
+  "ai_report_instructions": "List the slowest balatro.card.evaluate spans ($balatro.card.name, $span.duration_nano) under the slow balatro.hand.scoring spans and which session/run they belong to."
+}

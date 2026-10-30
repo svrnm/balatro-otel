@@ -1,0 +1,23 @@
+{
+  "name": "Balatro: score mismatch",
+  "description": "A hand raised its blind's score by a different amount than it scored (balatro.hand.blind_score_added != balatro.hand.score). Seen with Steamodded beta-1814a: hands debuffed by The Mouth still add their base value.",
+  "threshold": 0,
+  "comparison_operator": "ABOVE",
+  "window": "Last 15 minutes",
+  "queries": [
+    {
+      "name": "mismatched_hands",
+      "select": [
+        "COUNT(*)"
+      ],
+      "from": [
+        "BRONTO_TRACES_DATASET_ID"
+      ],
+      "where": "\"$span.name\" = 'balatro.hand' AND \"$balatro.hand.blind_score_added\" != \"$balatro.hand.score\""
+    }
+  ],
+  "monitor_type": "PATTERN",
+  "type": "PATTERN",
+  "formulas": [],
+  "mute_until": -1
+}

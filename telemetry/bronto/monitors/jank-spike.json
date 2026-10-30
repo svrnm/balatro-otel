@@ -1,0 +1,26 @@
+{
+  "name": "Balatro: jank spike",
+  "description": "More than 50 frames over 0.1 s in 10 minutes, per game state (app.jank).",
+  "threshold": 50,
+  "comparison_operator": "ABOVE",
+  "window": "Last 10 minutes",
+  "queries": [
+    {
+      "name": "janky_frames",
+      "select": [
+        "COUNT(*)"
+      ],
+      "from": [
+        "BRONTO_LOGS_DATASET_ID"
+      ],
+      "where": "\"$event.name\" = 'app.jank'",
+      "groups": [
+        "$balatro.game.state"
+      ]
+    }
+  ],
+  "monitor_type": "PATTERN",
+  "type": "PATTERN",
+  "formulas": [],
+  "mute_until": -1
+}

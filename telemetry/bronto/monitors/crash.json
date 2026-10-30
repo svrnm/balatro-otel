@@ -1,0 +1,25 @@
+{
+  "name": "Balatro: crash",
+  "description": "A Balatro session crashed (app.crash from the otel-trace mod). The event has the exception message and stack trace; follow $trace_id to the run it interrupted.",
+  "threshold": 0,
+  "comparison_operator": "ABOVE",
+  "window": "Last 15 minutes",
+  "queries": [
+    {
+      "name": "crashes",
+      "select": [
+        "COUNT(*)"
+      ],
+      "from": [
+        "BRONTO_LOGS_DATASET_ID"
+      ],
+      "where": "\"$event.name\" = 'app.crash'"
+    }
+  ],
+  "monitor_type": "PATTERN",
+  "type": "PATTERN",
+  "formulas": [],
+  "mute_until": -1,
+  "ai_report_enabled": true,
+  "ai_report_instructions": "Show the app.crash event's exception message, stack trace, game state and run seed. Follow its $trace_id in the .traces/balatro dataset to the failed balatro.run / balatro.blind / balatro.hand spans, and list the log records (mod errors, app.jank) of the same $session.id in the minutes before the crash."
+}

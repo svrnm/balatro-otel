@@ -1,0 +1,10 @@
+{
+	"id": "otel-chaos",
+	"name": "OTel Chaos (test only)",
+	"author": ["severin"],
+	"description": "Injects performance problems, bugs and crashes to test otel-trace. Never install for real play.",
+	"prefix": "otelchaos",
+	"main_file": "main.lua",
+	"version": "0.1.0",
+	"dependencies": ["Steamodded (>=1.0.0~BETA-0419b)"]
+}

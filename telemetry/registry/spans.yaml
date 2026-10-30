@@ -1,0 +1,209 @@
+file_format: definition/2
+
+# Trace tree: balatro.run -> balatro.blind -> balatro.hand -> balatro.hand.scoring -> balatro.card.evaluate
+#             balatro.run -> balatro.shop -> balatro.booster_pack
+# Every span also carries session.id and, during a run, balatro.run.seed.
+# A span cut short by a crash has status ERROR and error.type = lua_error.
+
+spans:
+  - type: balatro.run
+    kind: internal
+    stability: development
+    requirement_level: recommended
+    name:
+      note: balatro.run
+    brief: One run, from start until game over or the next run starts.
+    attributes:
+      - ref: session.id
+        requirement_level: recommended
+      - ref: balatro.run.seed
+        requirement_level: required
+      - ref: balatro.deck.name
+        requirement_level: recommended
+      - ref: balatro.stake
+        requirement_level: recommended
+      - ref: balatro.run.resumed
+        requirement_level: recommended
+      - ref: balatro.lua.memory.live
+        requirement_level: recommended
+      - ref: balatro.run.outcome
+        requirement_level: recommended
+      - ref: balatro.run.won
+        requirement_level: opt_in
+      - ref: balatro.ante
+        requirement_level: recommended
+      - ref: balatro.round
+        requirement_level: recommended
+      - ref: balatro.dollars
+        requirement_level: recommended
+      - ref: error.type
+        requirement_level:
+          conditionally_required: If the run was cut short by a crash.
+
+  - type: balatro.blind
+    kind: internal
+    stability: development
+    requirement_level: recommended
+    name:
+      note: balatro.blind
+    brief: One blind, from selecting it until the round ends.
+    attributes:
+      - ref: session.id
+        requirement_level: recommended
+      - ref: balatro.run.seed
+        requirement_level: recommended
+      - ref: balatro.blind.name
+        requirement_level: required
+      - ref: balatro.ante
+        requirement_level: recommended
+      - ref: balatro.blind.target
+        requirement_level: recommended
+      - ref: balatro.blind.score
+        requirement_level: recommended
+      - ref: balatro.blind.won
+        requirement_level: recommended
+      - ref: balatro.frame.count
+        requirement_level: recommended
+      - ref: balatro.frame.average_rate
+        requirement_level: recommended
+      - ref: balatro.frame.max_duration
+        requirement_level: recommended
+      - ref: balatro.frame.jank_count
+        requirement_level: recommended
+      - ref: balatro.frame.update.average_duration
+        requirement_level: recommended
+      - ref: balatro.frame.update.max_duration
+        requirement_level: recommended
+      - ref: balatro.frame.draw.average_duration
+        requirement_level: recommended
+      - ref: balatro.frame.draw.max_duration
+        requirement_level: recommended
+      - ref: balatro.lua.memory.used
+        requirement_level: recommended
+      - ref: balatro.lua.memory.max_used
+        requirement_level: recommended
+      - ref: balatro.event_queue.max_length
+        requirement_level: recommended
+      - ref: balatro.render.max_draw_calls
+        requirement_level: recommended
+      - ref: balatro.render.max_canvas_switches
+        requirement_level: recommended
+      - ref: balatro.render.max_shader_switches
+        requirement_level: recommended
+      - ref: balatro.render.max_texture_memory
+        requirement_level: recommended
+      - ref: error.type
+        requirement_level:
+          conditionally_required: If the blind was cut short by a crash.
+
+  - type: balatro.hand
+    kind: internal
+    stability: development
+    requirement_level: recommended
+    name:
+      note: balatro.hand
+    brief: One played hand, from scoring until its scoring animation has played out.
+    attributes:
+      - ref: session.id
+        requirement_level: recommended
+      - ref: balatro.run.seed
+        requirement_level: recommended
+      - ref: balatro.hand.card_count
+        requirement_level: recommended
+      - ref: balatro.hand.type
+        requirement_level: recommended
+      - ref: balatro.hand.chips
+        requirement_level: recommended
+      - ref: balatro.hand.mult
+        requirement_level: recommended
+      - ref: balatro.hand.score
+        requirement_level: recommended
+      - ref: balatro.hand.blind_score_added
+        requirement_level: recommended
+      - ref: error.type
+        requirement_level:
+          conditionally_required: If scoring was cut short by a crash.
+
+  - type: balatro.hand.scoring
+    kind: internal
+    stability: development
+    requirement_level: recommended
+    name:
+      note: balatro.hand.scoring
+    brief: The synchronous score calculation of a hand (no animation).
+    attributes:
+      - ref: session.id
+        requirement_level: recommended
+      - ref: balatro.run.seed
+        requirement_level: recommended
+      - ref: error.type
+        requirement_level:
+          conditionally_required: If scoring crashed.
+
+  - type: balatro.card.evaluate
+    kind: internal
+    stability: development
+    requirement_level: recommended
+    name:
+      note: balatro.card.evaluate
+    brief: >
+      Evaluation of one card or joker in one scoring context. Only recorded when the evaluation
+      produced an effect or took longer than 1 ms.
+    attributes:
+      - ref: session.id
+        requirement_level: recommended
+      - ref: balatro.run.seed
+        requirement_level: recommended
+      - ref: balatro.card.name
+        requirement_level: required
+      - ref: balatro.card.key
+        requirement_level: recommended
+      - ref: balatro.card.area
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.context
+        requirement_level: recommended
+      - ref: balatro.card.effect
+        requirement_level:
+          conditionally_required: If the evaluation returned numeric effects.
+
+  - type: balatro.shop
+    kind: internal
+    stability: development
+    requirement_level: recommended
+    name:
+      note: balatro.shop
+    brief: Time in the shop, from cashing out until "Next Round".
+    attributes:
+      - ref: session.id
+        requirement_level: recommended
+      - ref: balatro.run.seed
+        requirement_level: recommended
+      - ref: balatro.ante
+        requirement_level: recommended
+      - ref: balatro.dollars
+        requirement_level: recommended
+      - ref: error.type
+        requirement_level:
+          conditionally_required: If the shop was cut short by a crash.
+
+  - type: balatro.booster_pack
+    kind: internal
+    stability: development
+    requirement_level: recommended
+    name:
+      note: balatro.booster_pack
+    brief: An opened booster pack, until a pick is made or it is skipped.
+    attributes:
+      - ref: session.id
+        requirement_level: recommended
+      - ref: balatro.run.seed
+        requirement_level: recommended
+      - ref: balatro.card.name
+        requirement_level: recommended
+      - ref: balatro.card.key
+        requirement_level: recommended
+      - ref: balatro.booster_pack.skipped
+        requirement_level: recommended
+      - ref: error.type
+        requirement_level:
+          conditionally_required: If the pack was cut short by a crash.

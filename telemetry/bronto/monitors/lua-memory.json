@@ -1,0 +1,23 @@
+{
+  "name": "Balatro: Lua memory high",
+  "description": "Peak Lua heap during a blind above 300 MB (balatro.lua.memory.max_used on balatro.blind spans). For leaks compare balatro.lua.memory.live on balatro.run spans across runs of one session.",
+  "threshold": 314572800,
+  "comparison_operator": "ABOVE",
+  "window": "Last 15 minutes",
+  "queries": [
+    {
+      "name": "lua_memory_peak",
+      "select": [
+        "MAX(\"$balatro.lua.memory.max_used\")"
+      ],
+      "from": [
+        "BRONTO_TRACES_DATASET_ID"
+      ],
+      "where": "\"$span.name\" = 'balatro.blind'"
+    }
+  ],
+  "monitor_type": "PATTERN",
+  "type": "PATTERN",
+  "formulas": [],
+  "mute_until": -1
+}
