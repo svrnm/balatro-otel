@@ -2,7 +2,7 @@
 # The game itself is NOT in the image: run.sh mounts Balatro.love from the local Steam install.
 # Lovely only ships x86_64 Linux builds, so it is built from source for the host architecture.
 
-FROM ubuntu:24.04 AS lovely
+FROM ubuntu:25.10 AS lovely
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl git build-essential g++-14 cmake pkg-config \
