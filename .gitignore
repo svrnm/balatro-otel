@@ -10,3 +10,6 @@ __pycache__/
 .DS_Store
 # the stack's log file (telemetry/stack)
 telemetry/stack/data/
+
+# personal research notes (known issues, upstream drafts): kept locally
+notes/

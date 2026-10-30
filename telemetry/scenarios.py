@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reproduce known Balatro issues (telemetry/known-issues.md) through the BalatroBot API, so their
+"""Reproduce known Balatro issues through the BalatroBot API, so their
 telemetry can be checked. Each scenario prints RESULT lines; whether the bug still exists in this
 game version is part of the outcome, not a failure of the script.
 

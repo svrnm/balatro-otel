@@ -97,8 +97,9 @@ what it scored, no failed spans, no hook failures, and Lua memory does not grow 
 
 - `telemetry/chaos/` injects faults (jank, slow jokers, memory leak, mod errors, crashes, heavy
   rendering) and reports where each one surfaced, next to a clean baseline.
-- `telemetry/scenarios.py` reproduces known Balatro and Steamodded issues; findings are in
-  [telemetry/known-issues.md](telemetry/known-issues.md). Several scoring mismatches it finds come from
+- `telemetry/scenarios.py` reproduces known Balatro and Steamodded issues (a Perkeo crash, a
+  Spectral-pack softlock, retrigger-heavy scoring, boss blinds that debuff hands). Several scoring
+  mismatches it finds come from
   Steamodded 1.0.0~BETA-1814a and are fixed in Steamodded 26.829.0 and later; the containers stay on
   that version until BalatroBot supports newer Steamodded
   ([coder/balatrobot#244](https://github.com/coder/balatrobot/issues/244)).
@@ -119,6 +120,10 @@ BRONTO_API_KEY=... BRONTO_REGION=eu docker compose \
 
 It also has a dashboard (`dashboard.yaml`, for `bronto dashboards apply`) and monitors for crashes,
 mod errors, jank spikes, slow scoring, Lua memory and score mismatches (`create_monitors.sh`).
+
+On macOS I usually skip the Docker stack and let [compy](https://github.com/bronto-community/compy),
+a local OpenTelemetry Collector manager, receive the game's telemetry and forward it to Bronto: start
+the game with `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:14318` (compy's default OTLP/HTTP port).
 
 Any other OTLP backend works the same way: add an exporter to `telemetry/stack/otelcol.yaml`.
 
