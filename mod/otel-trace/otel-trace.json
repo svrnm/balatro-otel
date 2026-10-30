@@ -2,9 +2,9 @@
 	"id": "otel-trace",
 	"name": "OTel Trace",
 	"author": ["severin"],
-	"description": "Exports runs, blinds and hands as OpenTelemetry spans over OTLP/HTTP.",
+	"description": "Exports runs, blinds, hands, shop actions, frame timing and errors as OpenTelemetry traces, logs and metrics over OTLP/HTTP to the endpoint you configure (localhost by default).",
 	"prefix": "otel",
 	"main_file": "main.lua",
-	"version": "0.1.0",
-	"dependencies": ["Steamodded (>=1.0.0~BETA-0419b)"]
+	"version": "0.2.0",
+	"dependencies": ["Steamodded (>=1.0.0~BETA-1814a)", "Lovely (>=0.10)"]
 }

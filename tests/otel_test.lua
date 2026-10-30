@@ -2,7 +2,9 @@
 -- asserts their OTLP shape, and writes <dir>/traces.json, logs.json, metrics.json for posting to
 -- a collector (and from there to `weaver registry live-check`, see README).
 -- Usage (from the repo root): lua tests/otel_test.lua <dir>
-package.path = os.getenv("HOME") .. "/Library/Application Support/Balatro/Mods/smods/libs/json/?.lua;"
+-- SMODS_DIR: a Steamodded checkout, for its json library (default: the macOS Mods folder)
+local smods = os.getenv("SMODS_DIR") or (os.getenv("HOME") .. "/Library/Application Support/Balatro/Mods/smods")
+package.path = smods .. "/libs/json/?.lua;"
   .. "mod/otel-trace/?.lua;" .. package.path
 local otel = require "otel"
 local json = require "json"

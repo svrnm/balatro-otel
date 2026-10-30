@@ -1,0 +1,28 @@
+# Push a tag vX.Y.Z (matching the version in mod/otel-trace/otel-trace.json and manifest.json) to
+# publish a GitHub release with:
+#   otel-trace.zip                unzip into Balatro's Mods folder (contains the otel-trace folder)
+#   otel_trace-thunderstore.zip   upload to Thunderstore (manifest.json, icon.png, README.md at the root)
+name: Release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Versions match the tag
+        run: |
+          v=${GITHUB_REF_NAME#v}
+          test "$v" = "$(jq -r .version mod/otel-trace/otel-trace.json)"
+          test "$v" = "$(jq -r .version_number mod/otel-trace/manifest.json)"
+      - name: Build zips
+        run: |
+          (cd mod && zip -r ../otel-trace.zip otel-trace)
+          (cd mod/otel-trace && zip -r ../../otel_trace-thunderstore.zip .)
+      - run: gh release create "$GITHUB_REF_NAME" otel-trace.zip otel_trace-thunderstore.zip --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

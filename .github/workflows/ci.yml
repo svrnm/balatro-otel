@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y luajit zip
+      - name: Lua syntax (LuaJIT, like the game)
+        run: for f in mod/otel-trace/*.lua telemetry/chaos/otel-chaos/*.lua; do luajit -b "$f" /dev/null; done
+      - name: Offline exporter test
+        run: |
+          curl -sfL https://github.com/Steamodded/smods/archive/refs/tags/1.0.0-beta-1814a.tar.gz | tar xz -C /tmp
+          mkdir -p /tmp/otlp
+          SMODS_DIR=/tmp/smods-1.0.0-beta-1814a luajit tests/otel_test.lua /tmp/otlp
+      - name: Mod metadata
+        run: |
+          v=$(jq -r .version mod/otel-trace/otel-trace.json)
+          test "$v" = "$(jq -r .version_number mod/otel-trace/manifest.json)"
+          grep -q "\"balatro-otel-trace\", \"$v\"" mod/otel-trace/otel.lua  # SDK_VERSION
+      - name: Python syntax
+        run: python3 -m py_compile telemetry/*.py telemetry/chaos/*.py integrations/bronto/*.py
+      - name: Semantic convention registry (Weaver)
+        run: docker run --rm -v "$PWD/telemetry:/telemetry:ro" otel/weaver:v0.28.0 registry check --v2 -r /telemetry/registry

@@ -1,0 +1,7 @@
+{
+	"name": "otel_trace",
+	"version_number": "0.2.0",
+	"website_url": "https://github.com/svrnm/balatro-otel",
+	"description": "OpenTelemetry for Balatro: runs, hands, shop, frame timing and errors as traces, logs and metrics over OTLP.",
+	"dependencies": ["Steamodded-Steamodded-26.1002.0", "Thunderstore-lovely-0.10.0"]
+}
