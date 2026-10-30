@@ -15,7 +15,7 @@ has_chaos() { [[ ",$OTEL_CHAOS," == *",$1,"* ]]; }
 mkdir -p /balatro && unzip -q -o /game/Balatro.love -d /balatro
 SAVE="$HOME/.local/share/love/balatro"
 mkdir -p "$SAVE" && cp -R /saves/settings.jkr /saves/1 "$SAVE/"
-cp -R /work/otel-trace /mods/otel-trace
+cp -R /work/mod/otel-trace /mods/otel-trace
 if [ -n "$OTEL_CHAOS" ]; then
   cp -R /work/telemetry/chaos/otel-chaos /mods/otel-chaos
   export OTEL_CHAOS

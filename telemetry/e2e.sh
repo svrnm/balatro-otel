@@ -11,7 +11,7 @@ SERVE_ARGS=("${@:---fast}")
 LOG=telemetry/live-check-report/balatrobot.log
 
 docker inspect -f '{{.State.Running}}' lgtm >/dev/null 2>&1 || { echo "lgtm container is not running (see README)"; exit 1; }
-cp otel-trace/*.lua otel-trace/otel-trace.json "$HOME/Library/Application Support/Balatro/Mods/otel-trace/"
+cp mod/otel-trace/*.lua mod/otel-trace/otel-trace.json "$HOME/Library/Application Support/Balatro/Mods/otel-trace/"
 telemetry/live-check.sh start
 
 OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4319 uvx balatrobot serve --logs-path telemetry/live-check-report/balatrobot-logs "${SERVE_ARGS[@]}" </dev/null >"$LOG" 2>&1 &

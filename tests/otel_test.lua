@@ -1,9 +1,9 @@
 -- Offline check of otel.lua: builds sample spans, events, logs and metrics with registry names,
 -- asserts their OTLP shape, and writes <dir>/traces.json, logs.json, metrics.json for posting to
 -- a collector (and from there to `weaver registry live-check`, see README).
--- Usage: lua test.lua <dir>
+-- Usage (from the repo root): lua tests/otel_test.lua <dir>
 package.path = os.getenv("HOME") .. "/Library/Application Support/Balatro/Mods/smods/libs/json/?.lua;"
-  .. "otel-trace/?.lua;" .. package.path
+  .. "mod/otel-trace/?.lua;" .. package.path
 local otel = require "otel"
 local json = require "json"
 local D = otel.double

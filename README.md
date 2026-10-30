@@ -5,7 +5,7 @@ OTLP/HTTP JSON, plus a [Weaver](https://github.com/open-telemetry/weaver) regist
 every name it emits on top of OpenTelemetry semantic conventions v1.44.0.
 
 ```
-otel-trace/            the mod: main.lua (game hooks), otel.lua (OTLP exporter), otel-trace.json
+mod/otel-trace/        the mod: main.lua (game hooks), otel.lua (OTLP exporter), otel-trace.json
 test.lua               offline check of the exporter; writes sample OTLP payloads
 telemetry/registry/    Weaver registry: attributes, spans, events, metrics, attribute groups
 telemetry/.weaver.toml live-check matchers (how emitted telemetry maps to registry signals)
