@@ -12,8 +12,10 @@
 # Needs: the stack (telemetry/stack, see README) and the image: docker build -t balatro-otel-runner telemetry/container
 set -euo pipefail
 cd "$(dirname "$0")/../.."
-GAME="$HOME/Library/Application Support/Steam/steamapps/common/Balatro/Balatro.app/Contents/Resources/Balatro.love"
-SAVES="$HOME/Library/Application Support/Balatro"
+# BALATRO_LOVE / BALATRO_SAVES: the game archive (Balatro.love) and a save folder with settings.jkr and
+# profile 1/. Defaults: the macOS Steam install; only that has been tested.
+GAME="${BALATRO_LOVE:-$HOME/Library/Application Support/Steam/steamapps/common/Balatro/Balatro.app/Contents/Resources/Balatro.love}"
+SAVES="${BALATRO_SAVES:-$HOME/Library/Application Support/Balatro}"
 OUT=telemetry/live-check-report
 SPECS=("${@:-RED:WHITE:1}")
 
