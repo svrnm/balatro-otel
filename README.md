@@ -125,7 +125,7 @@ It also has a dashboard (`dashboard.yaml`, for `bronto dashboards apply`) and mo
 mod errors, jank spikes, slow scoring, Lua memory and score mismatches (`create_monitors.sh`).
 
 ![Bronto dashboard: runs, hands by type, blinds, card actions, hand score and money from two hours of bot play](docs/images/bronto-game.png)
-![Bronto dashboard: frame time, jank by game state, update vs draw time, FPS, animation queue and Lua memory](docs/images/bronto-performance.png)
+![Bronto dashboard: frame time percentiles, update vs draw time, jank by game state and FPS](docs/images/bronto-performance.png)
 
 On macOS I usually skip the Docker stack and let [compy](https://github.com/bronto-community/compy),
 a local OpenTelemetry Collector manager, receive the game's telemetry and forward it to Bronto: start
