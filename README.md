@@ -43,7 +43,8 @@ Every name is defined in a [Weaver](https://github.com/open-telemetry/weaver) re
    - logs and events: `telemetry/stack/data/logs.jsonl` (one OTLP/JSON request per line), e.g.
      `jq -c '.resourceLogs[].scopeLogs[].logRecords[] | select(.eventName == "app.crash")' telemetry/stack/data/logs.jsonl`
 
-The mod sends to `OTEL_EXPORTER_OTLP_ENDPOINT` (default `http://127.0.0.1:4318`) from a background
+The mod sends to `http://127.0.0.1:4318` by default; change it in the game under **Mods → OTel Trace →
+Config** or with `OTEL_EXPORTER_OTLP_ENDPOINT`. It sends from a background
 thread, every 10 s and at the end of each blind and run. What it sends, and what it does not, is in
 the [mod's README](mod/otel-trace/README.md#privacy).
 
