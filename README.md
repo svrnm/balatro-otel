@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/svrnm/balatro-otel/actions/workflows/ci.yml/badge.svg)](https://github.com/svrnm/balatro-otel/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+[![Thunderstore](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fthunderstore.io%2Fapi%2Fexperimental%2Fpackage%2Fsvrnm%2Fotel_trace%2F&query=%24.latest.version_number&label=Thunderstore&prefix=v&color=23aaff)](https://thunderstore.io/c/balatro/p/svrnm/otel_trace/)
 
 OpenTelemetry for [Balatro](https://www.playbalatro.com/): a [Steamodded](https://github.com/Steamodded/smods)
 mod that turns a game into traces, logs and metrics, plus the tooling to test it by letting a bot
