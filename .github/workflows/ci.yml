@@ -2,6 +2,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_call:
 permissions:
   contents: read
 
@@ -10,12 +11,16 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - run: sudo apt-get install -y luajit zip
       - name: Lua syntax (LuaJIT, like the game)
         run: for f in mod/otel-trace/*.lua telemetry/chaos/otel-chaos/*.lua; do luajit -b "$f" /dev/null; done
       - name: Offline exporter test
         run: |
-          curl -sfL https://github.com/Steamodded/smods/archive/refs/tags/1.0.0-beta-1814a.tar.gz | tar xz -C /tmp
+          curl -sfL -o /tmp/smods.tar.gz https://github.com/Steamodded/smods/archive/refs/tags/1.0.0-beta-1814a.tar.gz
+          (cd /tmp && sha256sum --check --ignore-missing "$GITHUB_WORKSPACE/telemetry/container/downloads.sha256")
+          tar xzf /tmp/smods.tar.gz -C /tmp
           mkdir -p /tmp/otlp
           SMODS_DIR=/tmp/smods-1.0.0-beta-1814a luajit tests/otel_test.lua /tmp/otlp
       - name: Mod metadata
@@ -24,8 +29,8 @@ jobs:
           test "$v" = "$(jq -r .version_number mod/otel-trace/manifest.json)"
           grep -q "\"balatro-otel-trace\", \"$v\"" mod/otel-trace/otel.lua  # SDK_VERSION
       - name: Python (ruff)
-        run: pipx run ruff==0.17.3 check $(git ls-files '*.py')
+        run: git ls-files -z '*.py' | xargs -0 pipx run ruff==0.17.3 check
       - name: Shell scripts (shellcheck)
-        run: shellcheck -S warning $(git ls-files '*.sh')
+        run: git ls-files -z '*.sh' | xargs -0 shellcheck -S warning
       - name: Semantic convention registry (Weaver)
-        run: docker run --rm -v "$PWD/telemetry:/telemetry:ro" otel/weaver:v0.28.0 registry check --v2 -r /telemetry/registry
+        run: docker run --rm -v "$PWD/telemetry:/telemetry:ro" otel/weaver:v0.28.0@sha256:5857bb81d8cc7ed608cdcae37c4b459eb020f21dd4acade35f7933cd6762fbcc registry check --v2 -r /telemetry/registry

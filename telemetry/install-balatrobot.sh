@@ -6,6 +6,7 @@ set -euo pipefail
 APP="$HOME/Library/Application Support/Balatro"
 GAME="$HOME/Library/Application Support/Steam/steamapps/common/Balatro"
 BACKUP="$APP/mods-backup-$(date +%Y-%m-%d)"
+CHECKSUMS="$(cd "$(dirname "$0")" && pwd)/container/downloads.sha256"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
@@ -15,6 +16,8 @@ cd "$TMP"
 curl -sfL -o lovely.tgz https://github.com/ethangreen-dev/lovely-injector/releases/download/v0.10.0/lovely-aarch64-apple-darwin.tar.gz
 curl -sfL -o smods.zip https://github.com/Steamodded/smods/archive/refs/tags/1.0.0-beta-1814a.zip
 curl -sfL -o bb.zip https://github.com/coder/balatrobot/archive/refs/tags/v1.5.2.zip
+# Verify every archive before extracting or replacing anything in the game install.
+awk '$2 == "lovely.tgz" || $2 == "smods.zip" || $2 == "bb.zip"' "$CHECKSUMS" | shasum -a 256 -c -
 mkdir lovely && tar -xzf lovely.tgz -C lovely
 unzip -q smods.zip && unzip -q bb.zip
 

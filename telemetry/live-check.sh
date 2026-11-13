@@ -12,15 +12,15 @@ OUT=live-check-report
 start() {
   docker rm -f weaver-live otelcol-live-check >/dev/null 2>&1 || true
   mkdir -p "$OUT" && rm -f "$OUT/live_check.json"
-  docker run -d --name weaver-live --network balatro-otel -p 4320:4320 \
-    -v "$PWD:/telemetry:ro" -v "$PWD/$OUT:/out" otel/weaver:v0.28.0 \
+  docker run -d --name weaver-live --network balatro-otel -p 127.0.0.1:4320:4320 \
+    -v "$PWD:/telemetry:ro" -v "$PWD/$OUT:/out" otel/weaver:v0.28.0@sha256:5857bb81d8cc7ed608cdcae37c4b459eb020f21dd4acade35f7933cd6762fbcc \
     registry live-check --v2 -r /telemetry/registry --config /telemetry/.weaver.toml \
     --otlp-grpc-address 0.0.0.0 --otlp-grpc-port 4317 --admin-port 4320 \
     --inactivity-timeout 3600 --format json --output /out >/dev/null
   curl -s --retry 60 --retry-all-errors --retry-delay 1 localhost:4320/health >/dev/null
-  docker run -d --name otelcol-live-check --network balatro-otel -p 4319:4318 \
+  docker run -d --name otelcol-live-check --network balatro-otel -p 127.0.0.1:4319:4318 \
     -v "$PWD/otelcol-live-check.yaml:/etc/otelcol-contrib/config.yaml:ro" \
-    otel/opentelemetry-collector-contrib:0.162.0 >/dev/null
+    otel/opentelemetry-collector-contrib:0.162.0@sha256:39923a8e431bd1f57be82411999d389fcfe40857492e4365456d97a4c1f74be6 >/dev/null
   curl -s --retry 30 --retry-all-errors --retry-delay 1 -o /dev/null -X POST \
     -H 'content-type: application/json' -d '{}' localhost:4319/v1/logs
   echo "live-check ready: send OTLP/HTTP to http://localhost:4319"

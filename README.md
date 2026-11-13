@@ -2,6 +2,9 @@
 
 [![CI](https://github.com/svrnm/balatro-otel/actions/workflows/ci.yml/badge.svg)](https://github.com/svrnm/balatro-otel/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/svrnm/balatro-otel)](https://github.com/svrnm/balatro-otel/releases/latest)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/svrnm/balatro-otel/badge)](https://scorecard.dev/viewer/?uri=github.com/svrnm/balatro-otel)
+[![Security policy](https://img.shields.io/badge/Security-policy-blue.svg)](SECURITY.md)
 
 OpenTelemetry for [Balatro](https://www.playbalatro.com/): a [Steamodded](https://github.com/Steamodded/smods)
 mod that turns a game into traces, logs and metrics, plus the tooling to test it by letting a bot
@@ -143,6 +146,23 @@ Any other OTLP backend works the same way: add an exporter to `telemetry/stack/o
 - Events are log records with an event name, not span events (OTEP 4430).
 - Upstream conventions used: `service.*`, `telemetry.sdk.*`, `os.type`, `session.id` + `session.start`,
   `app.jank`, `app.crash` + `exception.*`, `error.type`.
+
+## Security
+
+Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+CodeQL scans the Python tooling and GitHub Actions workflows; it does not cover Lua.
+OpenSSF Scorecard checks repository security practices weekly and on updates to `main`.
+
+Releases built with the attestation workflow include `SHA256SUMS` and signed build provenance.
+Download both ZIPs and `SHA256SUMS` from the same release to check their hashes:
+
+```sh
+shasum -a 256 -c SHA256SUMS
+gh attestation verify otel-trace.zip --repo svrnm/balatro-otel
+gh attestation verify otel_trace-thunderstore.zip --repo svrnm/balatro-otel
+```
+
+The Docker stack and live-check tools publish their host ports on `127.0.0.1`.
 
 ## License
 
