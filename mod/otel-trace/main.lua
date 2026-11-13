@@ -16,6 +16,47 @@ otel.resource["service.instance.id"] = instance_id
 otel.resource["os.type"] = OS_TYPE[love.system.getOS()] or love.system.getOS():lower()
 otel.resource["balatro.smods.version"] = SMODS.version
 otel.common["session.id"] = instance_id -- one session per game launch
+
+-- Endpoint: OTEL_EXPORTER_OTLP_ENDPOINT wins (otel.lua reads it), then the in-game setting. The game's
+-- text input can't type "/" and turns "0" into "o", so the setting is pasted from the clipboard.
+local mod = SMODS.current_mod
+local env_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+if not env_endpoint and mod.config.endpoint ~= "" then otel.endpoint = mod.config.endpoint end
+
+G.FUNCS.otel_paste_endpoint = function()
+  local url = (love.system.getClipboardText() or ""):match("^%s*(https?://[%w%-%._~:/%[%]@]+)%s*$")
+  if not url then return play_sound("cancel") end
+  mod.config.endpoint = url:gsub("/$", "")
+  otel.endpoint = mod.config.endpoint
+end
+
+G.FUNCS.otel_reset_endpoint = function()
+  mod.config.endpoint = ""
+  otel.endpoint = "http://127.0.0.1:4318"
+end
+
+mod.config_tab = function()
+  local function text(t, opts)
+    local n = { n = G.UIT.T, config = { scale = 0.35, colour = G.C.UI.TEXT_LIGHT } }
+    for k, v in pairs(opts or { text = t }) do n.config[k] = v end
+    return { n = G.UIT.R, config = { align = "cm", padding = 0.05 }, nodes = { n } }
+  end
+  local nodes = {
+    text("Sends telemetry over OTLP/HTTP to"),
+    text(nil, { ref_table = otel, ref_value = "endpoint", scale = 0.45, colour = G.C.FILTER }),
+  }
+  if env_endpoint then
+    nodes[#nodes + 1] = text("(set by OTEL_EXPORTER_OTLP_ENDPOINT)")
+  else
+    nodes[#nodes + 1] = text("Copy a URL such as http://192.168.1.10:4318, then paste it here.")
+    nodes[#nodes + 1] = { n = G.UIT.R, config = { align = "cm", padding = 0.1 }, nodes = {
+      UIBox_button({ label = { "Paste from clipboard" }, button = "otel_paste_endpoint", minw = 3.5, colour = G.C.BLUE, col = true }),
+      UIBox_button({ label = { "Reset to default" }, button = "otel_reset_endpoint", minw = 3.5, colour = G.C.RED, col = true }),
+    } }
+  end
+  return { n = G.UIT.ROOT, config = { r = 0.1, minw = 8, align = "cm", padding = 0.2, colour = G.C.BLACK }, nodes = nodes }
+end
+
 print("[otel] loaded, session " .. instance_id .. ", exporting to " .. otel.endpoint)
 local big = to_big or function(x) return x end -- Talisman defines to_big; vanilla compares plain numbers
 

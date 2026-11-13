@@ -18,6 +18,13 @@ Unofficial fan project, not affiliated with or endorsed by LocalThunk or Playsta
 
 ## Configure
 
+In the game: **Mods → OTel Trace → Config** shows where telemetry goes. Copy a URL (for example
+`http://192.168.1.10:4318`) and click **Paste from clipboard**; **Reset to default** goes back to
+`http://127.0.0.1:4318`. Balatro's text fields can't type URLs, hence the clipboard. The setting is
+saved in the game's `config` folder and survives mod updates.
+
+The environment variable takes precedence over the in-game setting:
+
 | Environment variable | Default | Meaning |
 | --- | --- | --- |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://127.0.0.1:4318` | Where to send; `/v1/traces`, `/v1/logs` and `/v1/metrics` are appended |

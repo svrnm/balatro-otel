@@ -21,7 +21,7 @@ jobs:
           test "$v" = "$(jq -r .version_number mod/otel-trace/manifest.json)"
       - name: Build zips
         run: |
-          (cd mod && zip -r ../otel-trace.zip otel-trace)
+          (cd mod && zip -r ../otel-trace.zip otel-trace -x otel-trace/manifest.json) # Steamodded logs an error for the Thunderstore manifest
           (cd mod/otel-trace && zip -r ../../otel_trace-thunderstore.zip .)
       - run: gh release create "$GITHUB_REF_NAME" otel-trace.zip otel_trace-thunderstore.zip --generate-notes
         env:
