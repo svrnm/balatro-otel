@@ -11,8 +11,8 @@ Unofficial fan project, not affiliated with or endorsed by LocalThunk or Playsta
 
 1. Install [Lovely](https://github.com/ethangreen-dev/lovely-injector) and
    [Steamodded](https://github.com/Steamodded/smods) (see their install guides for your OS).
-2. Put this `otel-trace` folder into your Balatro `Mods` folder, or install it with a Thunderstore
-   mod manager (r2modman).
+2. Put this `otel-trace` folder into your Balatro `Mods` folder, or install
+   [OTel Trace from Thunderstore](https://thunderstore.io/c/balatro/p/svrnm/otel_trace/) with a mod manager (r2modman, Gale, imm).
 3. Run something that receives OTLP on `localhost:4318`, for example the Collector + Jaeger +
    Prometheus stack from the [repository](https://github.com/svrnm/balatro-otel).
 
