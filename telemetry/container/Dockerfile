@@ -30,7 +30,7 @@ RUN /root/.cargo/bin/cargo +nightly-2026-10-29 build --locked --release --packag
 # (ffi.C.PHYSFS_*), which needs LÖVE built as a shared liblove.so. Ubuntu's love links it
 # statically without exporting the symbols. (liblovely.so from the Ubuntu stage runs on Fedora's
 # newer glibc.)
-FROM fedora:42@sha256:99e203b80b1c3d8f7e161ec10a68fd02b081ef83a3963553e513c82846b97814
+FROM fedora:45@sha256:a7d72ba2745b100a3351087472e5ee7b2450af7cf331e7673007e3817612839c
 RUN dnf install -y --setopt=install_weak_deps=False \
       love xorg-x11-server-Xvfb mesa-dri-drivers ca-certificates unzip python3 \
     && dnf clean all
