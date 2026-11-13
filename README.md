@@ -27,15 +27,18 @@ Every name is defined in a [Weaver](https://github.com/open-telemetry/weaver) re
 
 ## Quick start
 
-1. Install [Lovely](https://github.com/ethangreen-dev/lovely-injector) and
-   [Steamodded](https://github.com/Steamodded/smods) following their guides for your OS.
-2. Download `otel-trace.zip` from the [releases](https://github.com/svrnm/balatro-otel/releases) and
-   unzip it into Balatro's `Mods` folder (or copy `mod/otel-trace` there).
-3. Start a collector with Jaeger and Prometheus (Docker):
+1. Install the mod:
+   - with a mod manager (r2modman, Gale, imm): install [OTel Trace from Thunderstore](https://thunderstore.io/c/balatro/p/svrnm/otel_trace/), which
+     brings Lovely and Steamodded along; or
+   - by hand: install [Lovely](https://github.com/ethangreen-dev/lovely-injector) and
+     [Steamodded](https://github.com/Steamodded/smods) following their guides for your OS, then
+     download `otel-trace.zip` from the [releases](https://github.com/svrnm/balatro-otel/releases)
+     and unzip it into Balatro's `Mods` folder (or copy `mod/otel-trace` there).
+2. Start a collector with Jaeger and Prometheus (Docker):
    ```sh
    docker compose -f telemetry/stack/compose.yaml up -d
    ```
-4. Play. Then look at:
+3. Play. Then look at:
    - traces in Jaeger: http://localhost:16686 (service `balatro`)
    - metrics in Prometheus: http://localhost:9090, e.g.
      `histogram_quantile(0.99, sum by (le) (rate(balatro_frame_duration_seconds_bucket[5m])))` or
