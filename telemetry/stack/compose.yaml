@@ -8,25 +8,25 @@ name: balatro-otel
 
 services:
   otelcol:
-    image: otel/opentelemetry-collector-contrib:0.162.0
+    image: otel/opentelemetry-collector-contrib:0.162.0@sha256:39923a8e431bd1f57be82411999d389fcfe40857492e4365456d97a4c1f74be6
     container_name: otelcol
     command: ["--config=/etc/otelcol/otelcol.yaml"]
     volumes:
       - ./otelcol.yaml:/etc/otelcol/otelcol.yaml:ro
       - ./data:/data
     ports:
-      - "4317:4317"
-      - "4318:4318"
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
     depends_on: [jaeger, prometheus]
 
   jaeger:
-    image: jaegertracing/jaeger:2.22.0
+    image: jaegertracing/jaeger:2.22.0@sha256:836b967b5abcf1f7758066aa6b348619267a2f1459f72d472840570f9bd88a17
     container_name: jaeger
     ports:
-      - "16686:16686"
+      - "127.0.0.1:16686:16686"
 
   prometheus:
-    image: prom/prometheus:v3.15.0
+    image: prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
     container_name: prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -35,7 +35,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
 
 volumes:
   prometheus-data:
