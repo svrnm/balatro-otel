@@ -1,4 +1,4 @@
-# balatro-otel
+# balatro-otel <img src="mod/otel-trace/icon.png" alt="" width="96" align="right">
 
 [![CI](https://github.com/svrnm/balatro-otel/actions/workflows/ci.yml/badge.svg)](https://github.com/svrnm/balatro-otel/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
