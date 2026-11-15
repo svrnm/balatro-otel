@@ -89,7 +89,7 @@ CI also validates both tests' emitted payloads with Weaver live-check, checks th
 reference for drift, and shows the registry diff against the base commit. To regenerate the reference:
 
 ```sh
-docker run --rm -v "$PWD/telemetry:/telemetry:ro" -v "$PWD/docs:/out" \
+docker run --rm --user 0:0 -v "$PWD/telemetry:/telemetry:ro" -v "$PWD/docs:/out" \
   otel/weaver:v0.28.0 registry generate --v2 -r /telemetry/registry \
   --templates /telemetry/templates scoring /out
 ```

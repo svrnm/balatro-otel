@@ -46,7 +46,7 @@ jobs:
       - name: Generated scoring reference is current
         run: |
           mkdir -p /tmp/weaver-docs
-          docker run --rm -v "$PWD/telemetry:/telemetry:ro" -v /tmp/weaver-docs:/out \
+          docker run --rm --user 0:0 -v "$PWD/telemetry:/telemetry:ro" -v /tmp/weaver-docs:/out \
             otel/weaver:v0.28.0@sha256:5857bb81d8cc7ed608cdcae37c4b459eb020f21dd4acade35f7933cd6762fbcc \
             registry generate --v2 -r /telemetry/registry --templates /telemetry/templates scoring /out
           git diff --exit-code --no-index docs/scoring-signals.md /tmp/weaver-docs/scoring-signals.md
