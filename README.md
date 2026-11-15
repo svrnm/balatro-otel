@@ -26,6 +26,14 @@ play the game headless in containers.
 - **Metrics**: frame time and jank, update vs draw time, FPS, Lua memory, event queue length, render
   stats, hands, score, money, ante, crashes.
 
+Scoring telemetry also records card instance IDs, base rank/suit, enhancement center, edition,
+seal and debuff state. Copy events identify the copier and copied card. Effect events carry
+source/target identities, component, handler outcome,
+entry order and before/after chips and mult. Separate counters measure evaluations, explicitly
+reported Joker triggers, and effect-handler calls. These describe execution, not each Joker's
+causal share of the score. See the [scoring guide](docs/scoring-telemetry-design.md) and
+[generated signal reference](docs/scoring-signals.md) for scope and interpretation.
+
 Every name is defined in a [Weaver](https://github.com/open-telemetry/weaver) registry
 (`telemetry/registry`) on top of OpenTelemetry semantic conventions v1.44.0.
 
@@ -58,7 +66,7 @@ the [mod's README](mod/otel-trace/README.md#privacy).
 ## Repository
 
 ```
-mod/otel-trace/          the mod: main.lua (game hooks), otel.lua (OTLP exporter), metadata, icon
+mod/otel-trace/          the mod: main.lua (game hooks), scoring.lua, otel.lua (OTLP exporter), metadata, icon
 telemetry/stack/         Collector + Jaeger + Prometheus (+ log file) for local use
 telemetry/registry/      Weaver registry: attributes, spans, events, metrics
 telemetry/               test tooling: live-check, autoplay, container runner, chaos, scenarios
@@ -73,7 +81,17 @@ tests/otel_test.lua      offline check of the exporter
 ```sh
 lua tests/otel_test.lua /tmp/otlp   # asserts the OTLP shape, writes sample traces/logs/metrics.json
                                     # (SMODS_DIR: a Steamodded checkout, for its json library)
+lua tests/scoring_test.lua /tmp/otlp # checks scoring hooks and writes scoring signal samples
 docker run --rm -v "$PWD/telemetry:/telemetry" otel/weaver:v0.28.0 registry check --v2 -r /telemetry/registry
+```
+
+CI also validates both tests' emitted payloads with Weaver live-check, checks the generated scoring
+reference for drift, and shows the registry diff against the base commit. To regenerate the reference:
+
+```sh
+docker run --rm -v "$PWD/telemetry:/telemetry:ro" -v "$PWD/docs:/out" \
+  otel/weaver:v0.28.0 registry generate --v2 -r /telemetry/registry \
+  --templates /telemetry/templates scoring /out
 ```
 
 Weaver live-check validates what the mod actually emits: `telemetry/live-check.sh start` runs Weaver

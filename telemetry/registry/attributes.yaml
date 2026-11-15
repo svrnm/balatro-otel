@@ -230,7 +230,7 @@ attributes:
   - key: balatro.effect.source
     type: string
     stability: development
-    brief: Card or joker that produced the effect.
+    brief: Legacy source display name, from effect.card or falling back to the scored target; see balatro.effect.attribution for evidence.
     examples: ['Greedy Joker', 'Jack of Diamonds']
   - key: balatro.discard.card_count
     type: int
@@ -432,3 +432,181 @@ attributes:
     stability: development
     brief: Peak texture memory during the span, in bytes.
     examples: [268435456]
+
+  # --- Scoring evidence ----------------------------------------------------------------------
+  - key: balatro.card.instance.id
+    type: string
+    stability: development
+    brief: "Session-local identity of a live card object; not stable across reloads."
+    examples: ["card-1"]
+  - key: balatro.card.rank
+    type: string
+    stability: development
+    brief: "Base rank at evaluation entry, not effective scoring rank."
+    examples: ["Jack"]
+  - key: balatro.card.suit
+    type: string
+    stability: development
+    brief: "Base suit at evaluation entry, not effective scoring suit."
+    examples: ["Hearts"]
+  - key: balatro.card.enhancement
+    type: string
+    stability: development
+    brief: "Center key when the card belongs to the Enhanced set; omitted otherwise."
+    examples: ["m_glass"]
+  - key: balatro.card.edition
+    type: string
+    stability: development
+    brief: "Edition key, with vanilla boolean flags normalized to e_ keys; omitted when absent."
+    examples: ["e_polychrome"]
+  - key: balatro.card.seal
+    type: string
+    stability: development
+    brief: "Seal name at evaluation entry; omitted when absent."
+    examples: ["Red"]
+  - key: balatro.card.debuffed
+    type: boolean
+    stability: development
+    brief: "Whether the card is debuffed at evaluation entry."
+    examples: [false]
+  - key: balatro.card.evaluation.has_effects
+    type: boolean
+    stability: development
+    brief: "Whether the primary evaluation result is a nonempty table; not proof of application."
+    examples: [true]
+  - key: balatro.card.evaluation.has_post_effects
+    type: boolean
+    stability: development
+    brief: "Whether the post evaluation result is a nonempty table."
+    examples: [false]
+  - key: balatro.card.evaluation.retrigger
+    type: boolean
+    stability: development
+    brief: "Whether the engine context identifies an actual Joker retrigger execution."
+    examples: [true]
+  - key: balatro.card.evaluation.copy
+    type: boolean
+    stability: development
+    brief: "Whether blueprint or blueprint_card is set in the engine context."
+    examples: [true]
+  - key: balatro.card.evaluation.copy_source.id
+    type: string
+    stability: development
+    brief: "Live copier ID from the blueprint helper argument on copy events, or context.blueprint_card on other observations, when provided."
+    examples: ["card-2"]
+  - key: balatro.card.evaluation.retrigger_source.id
+    type: string
+    stability: development
+    brief: "Live card ID from a card-valued context.retrigger_joker."
+    examples: ["card-3"]
+  - key: balatro.card.trigger.reported
+    type: boolean
+    stability: development
+    brief: "Explicit boolean trigger result from Card.calculate_joker; omitted when not reported."
+    examples: [true]
+  - key: balatro.effect.sequence
+    type: int
+    stability: development
+    brief: "Effect handler entry order within one synchronous hand scoring operation."
+    examples: [1]
+  - key: balatro.effect.parent_sequence
+    type: int
+    stability: development
+    brief: "Enclosing effect handler sequence for nested calls; omit for outermost calls."
+    examples: [1]
+  - key: balatro.effect.from_edition
+    type: boolean
+    stability: development
+    brief: "Whether the caller marked this handler invocation as originating from an edition."
+    examples: [true]
+  - key: balatro.effect.source_card.instance.id
+    type: string
+    stability: development
+    brief: "Live source card ID, only when effect.card explicitly identifies a source."
+    examples: ["card-1"]
+  - key: balatro.effect.source_card.key
+    type: string
+    stability: development
+    brief: "Center key of the explicitly identified source card."
+    examples: ["j_joker"]
+  - key: balatro.effect.target.instance.id
+    type: string
+    stability: development
+    brief: "Live target card ID from the scored_card argument."
+    examples: ["card-2"]
+  - key: balatro.effect.target.key
+    type: string
+    stability: development
+    brief: "Center key of the target card."
+    examples: ["m_glass"]
+  - key: balatro.effect.target.name
+    type: string
+    stability: development
+    brief: "Display name of the target card."
+    examples: ["Jack of Hearts"]
+  - key: balatro.score.before.chips
+    type: double
+    stability: development
+    brief: "Running chips immediately before the handler; outer calls include nested mutations."
+    examples: [100]
+  - key: balatro.score.before.mult
+    type: double
+    stability: development
+    brief: "Running mult immediately before the handler; outer calls include nested mutations."
+    examples: [10]
+  - key: balatro.effect.component
+    type:
+      members:
+        - id: joker
+          stability: development
+          brief: joker
+        - id: playing_card
+          stability: development
+          brief: playing card
+        - id: enhancement
+          stability: development
+          brief: enhancement
+        - id: edition
+          stability: development
+          brief: edition
+        - id: seal
+          stability: development
+          brief: seal
+        - id: unknown
+          stability: development
+          brief: unknown
+    stability: development
+    brief: "Component identified by the effect-table application path, not inferred from card properties."
+  - key: balatro.effect.outcome
+    type:
+      members:
+        - id: handled
+          stability: development
+          brief: handled
+        - id: unhandled
+          stability: development
+          brief: unhandled
+        - id: unknown
+          stability: development
+          brief: unknown
+    stability: development
+    brief: "Handler return classification: true/string/table is handled, false is unhandled, otherwise unknown; not proof of score mutation."
+  - key: balatro.effect.attribution
+    type:
+      members:
+        - id: explicit
+          stability: development
+          brief: explicit
+        - id: target_fallback
+          stability: development
+          brief: target fallback
+        - id: unknown
+          stability: development
+          brief: unknown
+    stability: development
+    brief: "Evidence for the legacy source display name; only explicit attribution establishes a source identity."
+  - key: balatro.card.post_effect
+    type: template[double]
+    stability: development
+    brief: "Numeric fields in post results, using <index>.<source>.<effect> paths for ordered result lists, or <source>.<effect> for a direct result table."
+    examples: [4]

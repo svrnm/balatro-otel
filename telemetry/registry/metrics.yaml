@@ -142,3 +142,35 @@ metrics:
     stability: development
     requirement_level: recommended
     brief: Crashes (unrecoverable Lua errors).
+
+  - name: balatro.card.evaluations
+    instrument: counter
+    unit: "{evaluation}"
+    stability: development
+    requirement_level: recommended
+    brief: "All eval_card invocations during synchronous hand scoring, including fast empty evaluations whose spans are omitted."
+    attributes:
+      - ref: balatro.card.area
+        requirement_level: recommended
+
+  - name: balatro.card.triggers
+    instrument: counter
+    unit: "{trigger}"
+    stability: development
+    requirement_level: recommended
+    brief: "Explicit true trigger returns from Card.calculate_joker during synchronous hand scoring; not all returned effects."
+    attributes:
+      - ref: balatro.card.evaluation.retrigger
+        requirement_level: recommended
+
+  - name: balatro.effects
+    instrument: counter
+    unit: "{effect}"
+    stability: development
+    requirement_level: recommended
+    brief: "Effect-handler invocations during synchronous hand scoring, including nonnumeric arguments and no-op effects."
+    attributes:
+      - ref: balatro.effect.component
+        requirement_level: recommended
+      - ref: balatro.effect.outcome
+        requirement_level: recommended

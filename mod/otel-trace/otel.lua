@@ -3,7 +3,7 @@
 -- Names follow telemetry/registry (checked with Weaver) and OTel semantic conventions v1.44.0.
 local json = require "json"
 
-local SDK_NAME, SDK_VERSION = "balatro-otel-trace", "0.2.0"
+local SDK_NAME, SDK_VERSION = "balatro-otel-trace", "0.3.0"
 
 local M = {
   -- standard OTLP env var (base URL; /v1/traces etc. are appended)

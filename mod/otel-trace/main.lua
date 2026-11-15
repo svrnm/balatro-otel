@@ -6,6 +6,7 @@
 --   balatro.card.{buy,sell,use,redeem}, balatro.shop.reroll, balatro.blind.skip, app.jank, app.crash,
 --   session.start. Logs: Steamodded's logger, one scope per logger.
 -- Metrics: frame time histograms, render and memory gauges, gameplay counters.
+-- scoring.lua adds card properties, explicit trigger/copy events and bounded evaluation/effect counts.
 local otel = assert(SMODS.load_file("otel.lua"))()
 local D = otel.double
 
@@ -61,7 +62,6 @@ print("[otel] loaded, session " .. instance_id .. ", exporting to " .. otel.endp
 local big = to_big or function(x) return x end -- Talisman defines to_big; vanilla compares plain numbers
 
 local JANK_THRESHOLD = 0.1  -- seconds; longer frames emit app.jank
-local SLOW_EVAL = 0.001     -- seconds; card evaluations this slow are kept even without an effect
 local EXPORT_INTERVAL = 10  -- seconds between metric exports (which also flush spans and logs)
 
 local run, blind, hand, scoring, shop, pack
@@ -107,26 +107,6 @@ local function card_name(card)
   if card.ability and card.ability.set == "Joker" then return card.ability.name end
   if card.base and card.base.value then return card.base.value .. " of " .. card.base.suit end
   return card.ability and card.ability.name or "?"
-end
-
--- Context is a bag of boolean flags (joker_main, individual, repetition, ...); keep the ones set.
-local function context_flags(context)
-  local t = {}
-  for k, v in pairs(context) do if v == true then t[#t + 1] = k end end
-  table.sort(t)
-  return table.concat(t, ",")
-end
-
--- eval_card returns { jokers = { mult_mod = 4, ... }, playing_card = { chips = 10 }, ... }
-local function effect_attrs(ret, out)
-  for source, effect in pairs(ret or {}) do
-    if type(source) == "string" and type(effect) == "table" then
-      for k, v in pairs(effect) do
-        if type(k) == "string" and type(v) == "number" then out["balatro.card.effect." .. source .. "." .. k] = D(v) end
-      end
-    end
-  end
-  return out
 end
 
 -- Render stats reset when a frame is presented, so they are captured at the end of draw.
@@ -309,45 +289,8 @@ G.FUNCS.evaluate_play = function(e)
   return ret
 end
 
--- Every card/joker evaluation during scoring; kept only if it produced an effect or was slow.
-local orig_eval_card = eval_card
-function eval_card(card, context)
-  if not scoring then return orig_eval_card(card, context) end
-  local t0 = otel.now()
-  local ret, post = orig_eval_card(card, context)
-  local t1 = otel.now()
-  safe(function()
-    if next(ret or {}) or next(post or {}) or t1 - t0 > SLOW_EVAL then
-      local center = card.config and card.config.center
-      otel.finish(otel.start("balatro.card.evaluate", effect_attrs(ret, {
-        ["balatro.card.name"] = card_name(card),
-        ["balatro.card.key"] = center and center.key,
-        ["balatro.card.area"] = card.area == G.jokers and "jokers" or card.area == G.play and "play"
-          or card.area == G.hand and "hand" or "other",
-        ["balatro.card.evaluation.context"] = context_flags(context or {}),
-      }), scoring, t0), nil, nil, t1)
-    end
-  end)
-  return ret, post
-end
-
--- The single place chips/mult/dollars change: a timeline of the score as it builds up.
-local calculate_individual_effect = SMODS.calculate_individual_effect
-SMODS.calculate_individual_effect = function(effect, scored_card, key, amount, from_edition)
-  local ret = calculate_individual_effect(effect, scored_card, key, amount, from_edition)
-  safe(function()
-    if scoring and type(amount) == "number" then
-      otel.event("balatro.effect", {
-        ["balatro.effect.key"] = key,
-        ["balatro.effect.amount"] = D(amount),
-        ["balatro.effect.source"] = card_name(effect.card or scored_card),
-        ["balatro.score.chips"] = D(hand_chips),
-        ["balatro.score.mult"] = D(mult),
-      }, scoring)
-    end
-  end)
-  return ret
-end
+-- Scoring hooks share the current scoring span; observations never change game results.
+assert(SMODS.load_file("scoring.lua"))().install(otel, function() return scoring end)
 
 -- Shop: cash out opens it, "Next Round" (toggle_shop) closes it.
 local cash_out = G.FUNCS.cash_out

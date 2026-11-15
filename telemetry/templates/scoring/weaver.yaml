@@ -1,0 +1,10 @@
+templates:
+  - template: scoring-signals.md.j2
+    filter: >
+      {
+        spans: (semconv_grouped_spans({"v2": true}) | map(select(.root_namespace == "balatro"))),
+        events: (semconv_grouped_events({"v2": true}) | map(select(.root_namespace == "balatro"))),
+        metrics: (semconv_grouped_metrics({"v2": true}) | map(select(.root_namespace == "balatro")))
+      }
+    application_mode: single
+    file_name: scoring-signals.md

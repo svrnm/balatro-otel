@@ -5,6 +5,6 @@
 	"description": "Exports runs, blinds, hands, shop actions, frame timing and errors as OpenTelemetry traces, logs and metrics over OTLP/HTTP to the endpoint you configure (localhost by default).",
 	"prefix": "otel",
 	"main_file": "main.lua",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"dependencies": ["Steamodded (>=1.0.0~BETA-1814a)", "Lovely (>=0.10)"]
 }

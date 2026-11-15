@@ -17,17 +17,125 @@ events:
   - name: balatro.effect
     stability: development
     requirement_level: recommended
-    brief: A scoring effect changed chips, mult or money while a hand was scored.
+    brief: An effect handler was invoked during synchronous hand scoring; outcome and before/after state describe observed handling, not causal impact.
     attributes:
       - ref: balatro.effect.key
         requirement_level: required
       - ref: balatro.effect.amount
-        requirement_level: required
+        requirement_level:
+          conditionally_required: When the argument is a finite number.
       - ref: balatro.effect.source
         requirement_level: recommended
       - ref: balatro.score.chips
         requirement_level: recommended
       - ref: balatro.score.mult
+        requirement_level: recommended
+
+      - ref: balatro.effect.sequence
+        requirement_level: recommended
+      - ref: balatro.effect.parent_sequence
+        requirement_level: recommended
+      - ref: balatro.effect.from_edition
+        requirement_level: recommended
+      - ref: balatro.effect.component
+        requirement_level: recommended
+      - ref: balatro.effect.outcome
+        requirement_level: recommended
+      - ref: balatro.effect.attribution
+        requirement_level: recommended
+      - ref: balatro.effect.source_card.instance.id
+        requirement_level: recommended
+      - ref: balatro.effect.source_card.key
+        requirement_level: recommended
+      - ref: balatro.effect.target.instance.id
+        requirement_level: recommended
+      - ref: balatro.effect.target.key
+        requirement_level: recommended
+      - ref: balatro.effect.target.name
+        requirement_level: recommended
+      - ref: balatro.score.before.chips
+        requirement_level: recommended
+      - ref: balatro.score.before.mult
+        requirement_level: recommended
+
+  - name: balatro.card.trigger
+    stability: development
+    requirement_level: recommended
+    brief: An explicit true trigger result from Card.calculate_joker during synchronous hand scoring; effect-only returns without that flag do not emit this event. Timestamp is calculation completion; default severity is INFO.
+    attributes:
+      - ref: balatro.card.name
+        requirement_level: recommended
+      - ref: balatro.card.key
+        requirement_level: recommended
+      - ref: balatro.card.area
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.context
+        requirement_level: recommended
+      - ref: balatro.card.trigger.reported
+        requirement_level: recommended
+      - ref: balatro.card.instance.id
+        requirement_level: recommended
+      - ref: balatro.card.rank
+        requirement_level: recommended
+      - ref: balatro.card.suit
+        requirement_level: recommended
+      - ref: balatro.card.enhancement
+        requirement_level: recommended
+      - ref: balatro.card.edition
+        requirement_level: recommended
+      - ref: balatro.card.seal
+        requirement_level: recommended
+      - ref: balatro.card.debuffed
+        requirement_level: recommended
+      - ref: balatro.card.set
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.retrigger
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.copy
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.copy_source.id
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.retrigger_source.id
+        requirement_level: recommended
+
+  - name: balatro.card.copy
+    stability: development
+    requirement_level: recommended
+    brief: SMODS.blueprint_effect returned a nonempty effect table during synchronous hand scoring. The card identity describes the copied card and copy_source identifies the copier. Timestamp is helper completion; default severity is INFO.
+    attributes:
+      - ref: balatro.card.name
+        requirement_level: recommended
+      - ref: balatro.card.key
+        requirement_level: recommended
+      - ref: balatro.card.area
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.context
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.has_effects
+        requirement_level: recommended
+      - ref: balatro.card.instance.id
+        requirement_level: recommended
+      - ref: balatro.card.rank
+        requirement_level: recommended
+      - ref: balatro.card.suit
+        requirement_level: recommended
+      - ref: balatro.card.enhancement
+        requirement_level: recommended
+      - ref: balatro.card.edition
+        requirement_level: recommended
+      - ref: balatro.card.seal
+        requirement_level: recommended
+      - ref: balatro.card.debuffed
+        requirement_level: recommended
+      - ref: balatro.card.set
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.retrigger
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.copy
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.copy_source.id
+        requirement_level: recommended
+      - ref: balatro.card.evaluation.retrigger_source.id
         requirement_level: recommended
 
   - name: balatro.discard

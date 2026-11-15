@@ -5,6 +5,13 @@ visit and booster pack becomes a span; discards, purchases, scoring effects, fra
 become log events; frame timing, memory, score and money become metrics. Everything is sent over
 OTLP/HTTP (JSON) to an OpenTelemetry Collector or any backend that accepts OTLP.
 
+During hand scoring, card evaluations include instance identity and card properties. Effect events
+include source/target identity, component, outcome, ordering and chips/mult before and after.
+Copy events identify the copying Joker and the card whose effects it copied.
+Counters distinguish evaluations, explicitly reported Joker triggers, and effect-handler calls.
+A reported trigger is the engine's explicit flag; an effect-only return does not count as one.
+These signals do not assign causal score contributions to Jokers.
+
 Unofficial fan project, not affiliated with or endorsed by LocalThunk or Playstack.
 
 ## Install

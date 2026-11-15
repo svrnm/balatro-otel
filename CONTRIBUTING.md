@@ -9,6 +9,10 @@ Issues and pull requests are welcome.
   never crashes a run, and nothing blocks the game loop (exports run on a worker thread).
 - **Before a pull request**: `lua tests/otel_test.lua /tmp/otlp`, and ideally one container run
   (`telemetry/container/run.sh`) with `check_traces.py` passing. CI also runs ruff and shellcheck.
+  Run `lua tests/scoring_test.lua /tmp/otlp` for scoring-hook behavior and emitted signal samples.
+  CI validates those samples with Weaver live-check. After registry changes, regenerate
+  `docs/scoring-signals.md` using the command in the README; CI checks it for drift and prints the
+  registry diff against the base commit.
 - **Releases**: bump the version in `mod/otel-trace/otel-trace.json`, `mod/otel-trace/manifest.json`
   and `SDK_VERSION` in `mod/otel-trace/otel.lua`, then push a `vX.Y.Z` tag. The release workflow
   reruns CI before publishing the ZIPs, `SHA256SUMS`, and build provenance attestations.

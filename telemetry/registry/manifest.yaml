@@ -1,5 +1,5 @@
 file_format: definition_manifest/2.0
-schema_url: https://balatro-tracing.local/schemas/0.2.0
+schema_url: https://balatro-tracing.local/schemas/0.3.0
 description: Telemetry conventions for the Balatro OpenTelemetry mod (otel-trace).
 stability: development
 dependencies:
