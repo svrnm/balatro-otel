@@ -38,6 +38,12 @@ COPY --from=ghcr.io/astral-sh/uv:0.9.21@sha256:15f68a476b768083505fe1dbfcc998344
 ENV UV_TOOL_DIR=/opt/uv/tools UV_PYTHON_INSTALL_DIR=/opt/uv/python UV_TOOL_BIN_DIR=/usr/local/bin
 RUN uv tool install balatrobot==1.5.2
 
+# The Python player uses the standard OTel SDK. Lock every transitive dependency and hash.
+COPY bot-requirements.txt /tmp/bot-requirements.txt
+RUN uv venv /opt/autoplay \
+    && uv pip install --python /opt/autoplay/bin/python --require-hashes -r /tmp/bot-requirements.txt
+ENV PATH="/opt/autoplay/bin:$PATH"
+
 COPY --from=lovely /src/target/release/liblovely.so /usr/local/lib/liblovely.so
 COPY downloads.sha256 /tmp/downloads.sha256
 ENV LOVELY_MOD_DIR=/mods

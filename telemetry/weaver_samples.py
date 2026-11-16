@@ -33,7 +33,14 @@ def samples(payload):
                 yield {
                     "span": {
                         "name": span["name"],
-                        "kind": "internal",
+                        "kind": {
+                            1: "internal",
+                            2: "server",
+                            3: "client",
+                            "SPAN_KIND_INTERNAL": "internal",
+                            "SPAN_KIND_SERVER": "server",
+                            "SPAN_KIND_CLIENT": "client",
+                        }[span["kind"]],
                         "attributes": attributes(span.get("attributes", [])),
                     }
                 }
@@ -41,11 +48,19 @@ def samples(payload):
         yield {"resource": {"attributes": attributes(resource["resource"]["attributes"])}}
         for scope in resource["scopeLogs"]:
             for record in scope["logRecords"]:
+                severity = record["severityNumber"]
+                if isinstance(severity, str):
+                    severity = {
+                        "SEVERITY_NUMBER_INFO": 9,
+                        "SEVERITY_NUMBER_WARN": 13,
+                        "SEVERITY_NUMBER_ERROR": 17,
+                        "SEVERITY_NUMBER_FATAL": 21,
+                    }[severity]
                 yield {
                     "log": {
                         "event_name": record.get("eventName", ""),
-                        "severity_number": record["severityNumber"],
-                        "severity_text": record["severityText"],
+                        "severity_number": severity,
+                        "severity_text": record.get("severityText", ""),
                         "body": record.get("body", {}).get("stringValue", ""),
                         "attributes": attributes(record.get("attributes", [])),
                     }
@@ -70,7 +85,7 @@ def samples(payload):
                             bucket_counts=[int(x) for x in point["bucketCounts"]],
                         )
                     else:
-                        output["value"] = point["asDouble"]
+                        output["value"] = point["asDouble"] if "asDouble" in point else int(point["asInt"])
                     points.append(output)
                 yield {
                     "metric": {

@@ -3,7 +3,7 @@
 -- Names follow telemetry/registry (checked with Weaver) and OTel semantic conventions v1.44.0.
 local json = require "json"
 
-local SDK_NAME, SDK_VERSION = "balatro-otel-trace", "0.3.0"
+local SDK_NAME, SDK_VERSION = "balatro-otel-trace", "0.4.0"
 
 local M = {
   -- standard OTLP env var (base URL; /v1/traces etc. are appended)
@@ -90,7 +90,7 @@ end
 
 -- start_time/end_time (seconds, from M.now) let callers record spans after the fact.
 function M.start(name, attributes, parent, start_time)
-  return {
+  local span = {
     traceId = parent and parent.traceId or M.id(16),
     spanId = M.id(8),
     parentSpanId = parent and parent.spanId,
@@ -99,6 +99,10 @@ function M.start(name, attributes, parent, start_time)
     startTimeUnixNano = ns(start_time or M.now()),
     attrs = with_common(attributes),
   }
+  if M.link_context then
+    span.links = { { traceId = M.link_context.traceId, spanId = M.link_context.spanId } }
+  end
+  return span
 end
 
 -- err marks the span as failed (OTLP status ERROR) with err as the message.
@@ -171,15 +175,16 @@ function M.gauge(name, value, unit, attributes)
   point(name, "gauge", unit, attributes).asDouble = value
 end
 
-function M.histogram(name, value, unit, attributes)
+function M.histogram(name, value, unit, attributes, bounds)
   if not finite(value) then return end
   local p = point(name, "histogram", unit, attributes)
   if not p.buckets then
     p.buckets, p.count, p.sum, p.min, p.max = {}, 0, 0, value, value
-    for i = 1, #BOUNDS + 1 do p.buckets[i] = 0 end
+    p.bounds = bounds or BOUNDS
+    for i = 1, #p.bounds + 1 do p.buckets[i] = 0 end
   end
   local i = 1
-  while i <= #BOUNDS and value > BOUNDS[i] do i = i + 1 end
+  while i <= #p.bounds and value > p.bounds[i] do i = i + 1 end
   p.buckets[i] = p.buckets[i] + 1
   p.count, p.sum = p.count + 1, p.sum + value
   p.min, p.max = math.min(p.min, value), math.max(p.max, value)
@@ -214,7 +219,7 @@ function M.encode_metrics()
     for _, p in pairs(m.points) do
       local dp = { attributes = p.attributes, startTimeUnixNano = session_start, timeUnixNano = now }
       if m.kind == "histogram" then
-        dp.count, dp.sum, dp.min, dp.max, dp.explicitBounds = tostring(p.count), p.sum, p.min, p.max, BOUNDS
+        dp.count, dp.sum, dp.min, dp.max, dp.explicitBounds = tostring(p.count), p.sum, p.min, p.max, p.bounds
         dp.bucketCounts = {}
         for i, c in ipairs(p.buckets) do dp.bucketCounts[i] = tostring(c) end
       else

@@ -75,3 +75,47 @@ id = "match.log.app_crash"
 sample_type = "log"
 when = 'event_name == "app.crash"'
 attribute_groups = ["balatro.app.crash"]
+
+[[live-check.matchers]]
+id = "match.span.bot_run"
+sample_type = "span"
+when = 'name == "balatro.bot.run"'
+signal = "balatro.bot.run"
+
+[[live-check.matchers]]
+id = "match.span.bot_decision"
+sample_type = "span"
+when = 'name == "balatro.bot.decision"'
+signal = "balatro.bot.decision"
+
+[[live-check.matchers]]
+id = "match.span.bot_choose_hand"
+sample_type = "span"
+when = 'name == "balatro.bot.choose_hand"'
+signal = "balatro.bot.choose_hand"
+
+[[live-check.matchers]]
+id = "match.span.bot_scenario"
+sample_type = "span"
+when = 'name == "balatro.bot.scenario"'
+signal = "balatro.bot.scenario"
+
+[[live-check.matchers]]
+id = "match.span.bot_rpc_client"
+sample_type = "span"
+when = '"balatro.bot.role" in attributes && attributes["balatro.bot.role"] == "client"'
+signal = "rpc.jsonrpc.call.client"
+attribute_groups = ["balatro.bot.rpc"]
+
+[[live-check.matchers]]
+id = "match.span.bot_rpc_server"
+sample_type = "span"
+when = '"balatro.bot.role" in attributes && attributes["balatro.bot.role"] == "server"'
+signal = "rpc.jsonrpc.call.server"
+attribute_groups = ["balatro.bot.rpc"]
+
+[[live-check.matchers]]
+id = "match.resource.bot"
+sample_type = "resource"
+when = '"service.name" in attributes && (attributes["service.name"] == "balatro-autoplay" || attributes["service.name"] == "balatrobot")'
+strict_attribute_groups = ["balatro.bot.resource"]

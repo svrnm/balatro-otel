@@ -48,4 +48,5 @@ done
 telemetry/live-check.sh stop || failed=1
 sleep 30 # let the last batches reach Jaeger and the log file (a crashed run's trace has arrived later than 10 s)
 python3 telemetry/check_traces.py "$START" || failed=1
+python3 telemetry/check_bot_traces.py "$START" || failed=1
 exit "$failed"

@@ -40,12 +40,13 @@ def failed(span):
     return span.get("status", {}).get("code") in (2, "STATUS_CODE_ERROR")
 
 
-def traces(start, end, limit=1000):
-    """{trace id: [span]} for every balatro trace that started in [start, end] (unix seconds).
+def traces(start, end, limit=1000, service=SERVICE):
+    """{trace id: [span]} for traces involving service that started in [start, end] (unix seconds).
+    A distributed trace can include spans from other services; callers must filter if needed.
     Each span is OTLP/JSON plus "attrs" (its attributes) and "resource" (resource attributes)."""
     try:
         raw = _get(f"{JAEGER}/api/v3/traces", **{
-            "query.service_name": SERVICE, "query.start_time_min": _rfc3339(start),
+            "query.service_name": service, "query.start_time_min": _rfc3339(start),
             "query.start_time_max": _rfc3339(end), "query.search_depth": limit})
     except urllib.error.HTTPError as e:
         if e.code == 404:  # Jaeger's answer to "no traces found"

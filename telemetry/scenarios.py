@@ -19,6 +19,7 @@ import subprocess
 import sys
 import time
 
+import bot_telemetry as telemetry
 from autoplay import RPCError, best_hand, rpc, wait_for_api
 
 FORCE_WIN = 10**9  # chips set before the last hand so the blind is won
@@ -205,10 +206,12 @@ def main():
     ap.add_argument("scenario", choices=SCENARIOS)
     ap.add_argument("--port", type=int, default=12346)
     args = ap.parse_args()
-    try:
-        SCENARIOS[args.scenario](Game(args.port))
-    except RPCError as e:
-        result(args.scenario, aborted=e)
+    with telemetry.operation("balatro.bot.scenario", {"balatro.bot.scenario": args.scenario}) as span:
+        try:
+            SCENARIOS[args.scenario](Game(args.port))
+        except RPCError as e:
+            telemetry.failure(span, e.kind)
+            result(args.scenario, aborted=e)
 
 
 if __name__ == "__main__":

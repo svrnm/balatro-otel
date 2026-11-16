@@ -66,7 +66,7 @@ the [mod's README](mod/otel-trace/README.md#privacy).
 ## Repository
 
 ```
-mod/otel-trace/          the mod: main.lua (game hooks), scoring.lua, otel.lua (OTLP exporter), metadata, icon
+mod/otel-trace/          the mod: main.lua (game hooks), scoring.lua, bot.lua, otel.lua (OTLP exporter)
 telemetry/stack/         Collector + Jaeger + Prometheus (+ log file) for local use
 telemetry/registry/      Weaver registry: attributes, spans, events, metrics
 telemetry/               test tooling: live-check, autoplay, container runner, chaos, scenarios
@@ -82,6 +82,7 @@ tests/otel_test.lua      offline check of the exporter
 lua tests/otel_test.lua /tmp/otlp   # asserts the OTLP shape, writes sample traces/logs/metrics.json
                                     # (SMODS_DIR: a Steamodded checkout, for its json library)
 lua tests/scoring_test.lua /tmp/otlp # checks scoring hooks and writes scoring signal samples
+lua tests/bot_test.lua /tmp/otlp     # checks RPC context, async completion, and game span links
 docker run --rm -v "$PWD/telemetry:/telemetry" otel/weaver:v0.28.0 registry check --v2 -r /telemetry/registry
 ```
 
@@ -105,6 +106,20 @@ and a collector on `localhost:4319` that forwards to Weaver and to the stack; se
 `telemetry/autoplay.py` plays seeded runs through it. On macOS, `telemetry/install-balatrobot.sh`
 installs Lovely 0.10.0, Steamodded 1.0.0~BETA-1814a and BalatroBot 1.5.2, and `telemetry/e2e.sh`
 plays one run against live-check.
+
+Bot instrumentation adds two services alongside `balatro`: `balatro-autoplay` traces Python runs,
+decisions, hand-selection strategy and outgoing commands; `balatrobot` traces the in-game API server
+through asynchronous response completion. W3C trace context joins each client/server call, and span
+links connect commands to game hands without changing the game trace hierarchy. RPC duration metrics,
+bounded decision counts, and recovery/error events go to the same endpoint. See the
+[bot guide](docs/bot-instrumentation.md) and [signal reference](docs/bot-signals.md).
+
+Local Python runs now use the locked SDK dependencies:
+
+```sh
+uv run --with-requirements telemetry/container/bot-requirements.txt \
+  python telemetry/autoplay.py --seed BOT0001
+```
 
 ### Containers (headless, parallel, long-running)
 

@@ -31,7 +31,8 @@ stop_game() {
 }
 trap 'stop_game; telemetry/live-check.sh stop >/dev/null 2>&1 || true' EXIT
 
-python3 telemetry/autoplay.py --seed "$SEED"
+OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4319 uv run \
+  --with-requirements telemetry/container/bot-requirements.txt python telemetry/autoplay.py --seed "$SEED"
 sleep 12 # past one metric export interval, so the last spans, logs and metrics leave the game
 stop_game
 trap - EXIT

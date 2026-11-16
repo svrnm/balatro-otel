@@ -1,0 +1,183 @@
+file_format: definition/2
+
+# RPC boundary definitions are imported from the released upstream registry, not redeclared.
+imports:
+  spans:
+    - span.rpc.jsonrpc.call.client
+    - span.rpc.jsonrpc.call.server
+  metrics:
+    - rpc.client.call.duration
+    - rpc.server.call.duration
+
+attributes:
+  - key: balatro.bot.role
+    type: string
+    stability: development
+    brief: "Instrumentation role, client or server."
+    examples: ["client"]
+  - key: balatro.bot.deck
+    type: string
+    stability: development
+    brief: "Deck argument passed to the bot run."
+    examples: ["BLUE"]
+  - key: balatro.bot.stake
+    type: string
+    stability: development
+    brief: "Stake argument passed to the bot run."
+    examples: ["WHITE"]
+  - key: balatro.bot.action
+    type: string
+    stability: development
+    brief: "Chosen command or a bounded decision category."
+    examples: ["play"]
+  - key: balatro.bot.strategy
+    type: string
+    stability: development
+    brief: "Hand-selection heuristic, flush, rank_group, or high_cards."
+    examples: ["flush"]
+  - key: balatro.bot.forced
+    type: boolean
+    stability: development
+    brief: "Whether debug assistance is enabled for this decision."
+    examples: [true]
+  - key: balatro.bot.run.outcome
+    type: string
+    stability: development
+    brief: "Run stop reason, game_over, max_rounds, step_limit, or error."
+    examples: ["game_over"]
+  - key: balatro.bot.scenario
+    type: string
+    stability: development
+    brief: "Named test scenario being executed."
+    examples: ["retrigger"]
+  - key: balatro.bot.recovery.action
+    type: string
+    stability: development
+    brief: "Recovery after a failed command; reread_state rather than replaying an uncertain action."
+    examples: ["reread_state"]
+
+attribute_groups:
+  - id: balatro.bot.rpc
+    visibility: public
+    stability: development
+    brief: Additional correlation attributes on upstream RPC spans.
+    attributes:
+      # v1.44.0's JSON-RPC span note requires this, but its attribute list omits it.
+      - ref: rpc.system.name
+        requirement_level: required
+      - ref: balatro.bot.role
+      - ref: balatro.run.seed
+      - ref: session.id
+
+  - id: balatro.bot.resource
+    visibility: public
+    stability: development
+    brief: Resource identity for the Python player and the in-game BalatroBot server.
+    attributes:
+      - ref: service.name
+        requirement_level: required
+      - ref: service.version
+      - ref: service.instance.id
+      - ref: telemetry.sdk.name
+      - ref: telemetry.sdk.language
+      - ref: telemetry.sdk.version
+
+spans:
+  - type: balatro.bot.run
+    kind: internal
+    stability: development
+    requirement_level: recommended
+    name:
+      note: balatro.bot.run
+    brief: "One seeded Python autoplay run, including readiness, decisions, commands and final menu cleanup."
+    attributes:
+      - ref: balatro.run.seed
+        requirement_level: recommended
+      - ref: balatro.bot.deck
+        requirement_level: recommended
+      - ref: balatro.bot.stake
+        requirement_level: recommended
+      - ref: balatro.bot.run.outcome
+        requirement_level: recommended
+      - ref: error.type
+        requirement_level: recommended
+
+  - type: balatro.bot.decision
+    kind: internal
+    stability: development
+    requirement_level: recommended
+    name:
+      note: balatro.bot.decision
+    brief: "One game-state decision, including its outgoing commands and recovery when needed."
+    attributes:
+      - ref: balatro.game.state
+        requirement_level: recommended
+      - ref: balatro.bot.forced
+        requirement_level: recommended
+      - ref: balatro.bot.action
+        requirement_level: recommended
+      - ref: balatro.run.seed
+        requirement_level: recommended
+      - ref: error.type
+        requirement_level: recommended
+
+  - type: balatro.bot.choose_hand
+    kind: internal
+    stability: development
+    requirement_level: recommended
+    name:
+      note: balatro.bot.choose_hand
+    brief: "Compute card indices using the deterministic hand-selection heuristic."
+    attributes:
+      - ref: balatro.bot.strategy
+        requirement_level: recommended
+      - ref: balatro.run.seed
+        requirement_level: recommended
+      - ref: error.type
+        requirement_level: recommended
+
+  - type: balatro.bot.scenario
+    kind: internal
+    stability: development
+    requirement_level: recommended
+    name:
+      note: balatro.bot.scenario
+    brief: "One named Python test scenario."
+    attributes:
+      - ref: balatro.bot.scenario
+        requirement_level: recommended
+      - ref: error.type
+        requirement_level: recommended
+
+metrics:
+  - name: balatro.bot.decisions
+    instrument: counter
+    unit: "{decision}"
+    stability: development
+    requirement_level: recommended
+    brief: Completed Python decision iterations, including iterations that recover from a command failure.
+    attributes:
+      - ref: balatro.game.state
+        requirement_level: required
+
+events:
+  - name: balatro.bot.recovery
+    stability: development
+    requirement_level: recommended
+    brief: The Python player begins recovery after an uncertain or rejected RPC command. Timestamp is recovery start; default severity is WARN. No automatic action replay is implied.
+    attributes:
+      - ref: balatro.bot.recovery.action
+        requirement_level: required
+      - ref: balatro.game.state
+      - ref: balatro.run.seed
+      - ref: error.type
+
+  - name: balatro.bot.request.failed
+    stability: development
+    requirement_level: recommended
+    brief: A server command completed with an RPC or transport error, or was abandoned on disconnect, timeout, shutdown or game crash. Timestamp is completion; default severity is WARN.
+    attributes:
+      - ref: rpc.method
+      - ref: error.type
+      - ref: session.id
+      - ref: balatro.run.seed

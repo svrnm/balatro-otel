@@ -12,6 +12,12 @@ Counters distinguish evaluations, explicitly reported Joker triggers, and effect
 A reported trigger is the engine's explicit flag; an effect-only return does not count as one.
 These signals do not assign causal score contributions to Jokers.
 
+When BalatroBot is installed, the mod also exports its parsed JSON-RPC commands under service
+`balatrobot`, including response completion across frames, errors and duration metrics. Incoming
+W3C traceparent headers connect those server spans to instrumented clients; game spans link to
+the command active at their creation. The bot remains optional. The repository's Python player
+exports its own run, decision and client telemetry under `balatro-autoplay`.
+
 Unofficial fan project, not affiliated with or endorsed by LocalThunk or Playstack.
 
 ## Install

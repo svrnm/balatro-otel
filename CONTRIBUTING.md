@@ -13,8 +13,13 @@ Issues and pull requests are welcome.
   CI validates those samples with Weaver live-check. After registry changes, regenerate
   `docs/scoring-signals.md` using the command in the README; CI checks it for drift and prints the
   registry diff against the base commit.
+  For bot changes, also run `lua tests/bot_test.lua /tmp/otlp` and
+  `BOT_TEST_OUTPUT=/tmp/otlp uv run --with-requirements telemetry/container/bot-requirements.txt python tests/bot_telemetry_test.py`.
+  Regenerate `docs/bot-signals.md` using the same Weaver command with target `bot`.
+  The container runner checks client/server parentage and links from commands to hands.
 - **Releases**: bump the version in `mod/otel-trace/otel-trace.json`, `mod/otel-trace/manifest.json`
-  and `SDK_VERSION` in `mod/otel-trace/otel.lua`, then push a `vX.Y.Z` tag. The release workflow
+  and `SDK_VERSION` in `mod/otel-trace/otel.lua`, plus the Python bot's version/schema constants and
+  the registry schema URL when applicable, then push a `vX.Y.Z` tag. The release workflow
   reruns CI before publishing the ZIPs, `SHA256SUMS`, and build provenance attestations.
 
 Container images are pinned by digest and GitHub Actions by commit; Dependabot proposes updates.
@@ -24,5 +29,11 @@ review the release and source changes, compute its SHA-256, and update the URL a
 The checksums detect changes after the initial pin; they do not replace reviewing the dependency.
 Lovely is pinned to its v0.10.0 commit, built with its Cargo lockfile and `nightly-2026-10-29`.
 Update and test that toolchain pin explicitly when upgrading Lovely.
+
+The Python bot uses hash-locked dependencies in `telemetry/container/bot-requirements.txt`.
+To update them, review the SDK/exporter releases, edit `bot-requirements.in`, then run
+`uv pip compile --generate-hashes --universal telemetry/container/bot-requirements.in -o telemetry/container/bot-requirements.txt`
+and rebuild/test the runner. JSON-RPC conventions remain pinned to the manifest's released semconv
+version, even when the SDK bundles newer constants.
 
 Never commit game files (`Balatro.love`, extracted Lua, sprites, audio) or recordings of the game.

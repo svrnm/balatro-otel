@@ -78,6 +78,10 @@ local function safe(f, ...)
   end
 end
 
+-- BalatroBot is optional. Attach after all mods have loaded; use a separate server resource while
+-- retaining game trace hierarchy and linking new game spans to the active remote command.
+local bot = assert(SMODS.load_file("bot.lua"))().new(otel, assert(SMODS.load_file("otel.lua"))(), innermost)
+
 local function state_name()
   for name, v in pairs(G.STATES) do if v == G.STATE then return name end end
   return tostring(G.STATE)
@@ -472,6 +476,7 @@ end
 
 local update = Game.update
 function Game:update(dt)
+  safe(bot.update)
   local t0 = love.timer.getTime()
   if last_frame_start then safe(on_frame, t0 - last_frame_start) end
   last_frame_start = t0
@@ -504,6 +509,7 @@ local errorhandler = love.errorhandler
 function love.errorhandler(msg)
   local trace = debug.traceback(tostring(msg), 2)
   pcall(function()
+    bot.abort("lua_error")
     otel.event("app.crash", {
       ["app.crash.id"] = otel.uuid(),
       ["exception.message"] = tostring(msg),

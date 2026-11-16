@@ -14,7 +14,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0 # Weaver compares the registry with the base commit.
-      - run: sudo apt-get install -y luajit zip
+      - run: sudo apt-get install -y luajit zip python3-venv
       - name: Lua syntax (LuaJIT, like the game)
         run: for f in mod/otel-trace/*.lua telemetry/chaos/otel-chaos/*.lua; do luajit -b "$f" /dev/null; done
       - name: Offline exporter test
@@ -25,12 +25,20 @@ jobs:
           mkdir -p /tmp/otlp
           SMODS_DIR=/tmp/smods-1.0.0-beta-1814a luajit tests/otel_test.lua /tmp/otlp
           SMODS_DIR=/tmp/smods-1.0.0-beta-1814a luajit tests/scoring_test.lua /tmp/otlp
+          SMODS_DIR=/tmp/smods-1.0.0-beta-1814a luajit tests/bot_test.lua /tmp/otlp
+      - name: Python bot instrumentation
+        run: |
+          python3 -m venv /tmp/bot-venv
+          /tmp/bot-venv/bin/pip install --require-hashes -r telemetry/container/bot-requirements.txt
+          BOT_TEST_OUTPUT=/tmp/otlp /tmp/bot-venv/bin/python tests/bot_telemetry_test.py
           python3 telemetry/weaver_samples.py /tmp/otlp/*.json > /tmp/weaver-samples.json
       - name: Mod metadata
         run: |
           v=$(jq -r .version mod/otel-trace/otel-trace.json)
           test "$v" = "$(jq -r .version_number mod/otel-trace/manifest.json)"
           grep -q "\"balatro-otel-trace\", \"$v\"" mod/otel-trace/otel.lua  # SDK_VERSION
+          PYTHONPATH=telemetry /tmp/bot-venv/bin/python -c \
+            'import json, pathlib, bot_telemetry; assert bot_telemetry.VERSION == json.loads(pathlib.Path("mod/otel-trace/otel-trace.json").read_text())["version"]'
       - name: Python (ruff)
         run: git ls-files -z '*.py' | xargs -0 pipx run ruff==0.17.3 check
       - name: Shell scripts (shellcheck)
@@ -50,6 +58,10 @@ jobs:
             otel/weaver:v0.28.0@sha256:5857bb81d8cc7ed608cdcae37c4b459eb020f21dd4acade35f7933cd6762fbcc \
             registry generate --v2 -r /telemetry/registry --templates /telemetry/templates scoring /out
           git diff --exit-code --no-index docs/scoring-signals.md /tmp/weaver-docs/scoring-signals.md
+          docker run --rm --user 0:0 -v "$PWD/telemetry:/telemetry:ro" -v /tmp/weaver-docs:/out \
+            otel/weaver:v0.28.0@sha256:5857bb81d8cc7ed608cdcae37c4b459eb020f21dd4acade35f7933cd6762fbcc \
+            registry generate --v2 -r /telemetry/registry --templates /telemetry/templates bot /out
+          git diff --exit-code --no-index docs/bot-signals.md /tmp/weaver-docs/bot-signals.md
       - name: Semantic convention changes
         env:
           REGISTRY_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
