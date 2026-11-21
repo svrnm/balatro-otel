@@ -36,6 +36,16 @@ In the game: **Mods → OTel Trace → Config** shows where telemetry goes. Copy
 `http://127.0.0.1:4318`. Balatro's text fields can't type URLs, hence the clipboard. The setting is
 saved in the game's `config` folder and survives mod updates.
 
+`https://` endpoints work too, on desktop and on phones, and the server's certificate must be one
+the system trusts. LuaSocket, which the game ships, has no TLS, so the mod uses whichever of these
+it finds (the log says which: `[otel] HTTPS export via ...`):
+
+| Backend | Where |
+| --- | --- |
+| `lua_https`: the `https` module | Android and Windows builds of the game, LÖVE 12 |
+| `cfnetwork`: Apple's CFNetwork | macOS and iOS |
+| `curl`: libcurl | Linux and other systems with libcurl installed |
+
 The environment variable takes precedence over the in-game setting:
 
 | Environment variable | Default | Meaning |

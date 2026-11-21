@@ -59,7 +59,8 @@ Every name is defined in a [Weaver](https://github.com/open-telemetry/weaver) re
      `jq -c '.resourceLogs[].scopeLogs[].logRecords[] | select(.eventName == "app.crash")' telemetry/stack/data/logs.jsonl`
 
 The mod sends to `http://127.0.0.1:4318` by default; change it in the game under **Mods → OTel Trace →
-Config** or with `OTEL_EXPORTER_OTLP_ENDPOINT`. It sends from a background
+Config** or with `OTEL_EXPORTER_OTLP_ENDPOINT`. `https://` endpoints work as well, on desktop, Android
+and iOS ([how](mod/otel-trace/README.md#configure)). It sends from a background
 thread, every 10 s and at the end of each blind and run. What it sends, and what it does not, is in
 the [mod's README](mod/otel-trace/README.md#privacy).
 
@@ -72,6 +73,7 @@ telemetry/registry/      Weaver registry: attributes, spans, events, metrics
 telemetry/               test tooling: live-check, autoplay, container runner, chaos, scenarios
 integrations/bronto/     optional: also send to Bronto, with a dashboard and monitors
 tests/otel_test.lua      offline check of the exporter
+tests/export/            the export thread in LÖVE, against HTTP and HTTPS endpoints
 ```
 
 ## Development and testing
@@ -85,6 +87,10 @@ lua tests/scoring_test.lua /tmp/otlp # checks scoring hooks and writes scoring s
 lua tests/bot_test.lua /tmp/otlp     # checks RPC context, async completion, and game span links
 docker run --rm -v "$PWD/telemetry:/telemetry" otel/weaver:v0.28.0 registry check --v2 -r /telemetry/registry
 ```
+
+`tests/export` runs the export thread in LÖVE (the game's own, since the tests above have no
+threads or sockets) and prints what each endpoint answered, to check HTTP and each HTTPS backend; how
+to run it is at the top of its `main.lua`.
 
 CI also validates both tests' emitted payloads with Weaver live-check, checks the generated scoring
 reference for drift, and shows the registry diff against the base commit. To regenerate the reference:

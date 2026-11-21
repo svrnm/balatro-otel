@@ -248,21 +248,208 @@ end
 -- Runs in its own Lua state: blocks on the channel, POSTs each payload. A slow or missing
 -- collector only delays this thread, never a frame.
 -- Up to 3 attempts with backoff; 4xx means the payload itself is rejected, so no retry.
-local WORKER = [[
+--
+-- http:// goes through LuaSocket. LuaSocket has no TLS, so https:// uses the first of these
+-- that loads, and each POST returns the status code or an error string:
+--   lua-https  the `https` module (LÖVE 12; the Android and Windows builds of Balatro ship it)
+--   cfnetwork  Apple's CFNetwork through the FFI (macOS and iOS, where LÖVE 11.5 has no `https`)
+--   curl       libcurl through the FFI (Linux and other desktops without `https`)
+-- All three verify the server certificate against the system's trusted roots. iOS LuaJIT has
+-- no FFI callbacks, so the FFI backends avoid them: CFNetwork's read stream is polled, and curl
+-- writes the response body to the null device.
+M.WORKER = [==[
 require "love.thread"
-local channel = ...
+local channel, prefer = ...
 local socket, http, ltn12 = require "socket", require "socket.http", require "ltn12"
-http.TIMEOUT = 10
+local TIMEOUT = 10
+http.TIMEOUT = TIMEOUT
+
+local function post_http(url, body, headers)
+  local _, code = http.request { url = url, method = "POST", source = ltn12.source.string(body), headers = headers }
+  return code
+end
+
+local backends = {}
+
+function backends.lua_https()
+  local https = require "https"
+  return function(url, body, headers)
+    local ok, code, resp = pcall(https.request, url, { method = "POST", data = body, headers = headers })
+    if not ok then return tostring(code) end
+    if code == 0 then return tostring(resp) end -- lua-https reports connection failures as status 0
+    return code
+  end
+end
+
+function backends.cfnetwork()
+  local ffi = require "ffi"
+  assert(ffi.os == "OSX", "not an Apple OS") -- LuaJIT reports iOS as OSX too
+  ffi.cdef [[
+    typedef const void *CFTypeRef;
+    typedef long CFIndex;
+    CFTypeRef CFURLCreateWithBytes(CFTypeRef, const char *, CFIndex, uint32_t, CFTypeRef);
+    CFTypeRef CFStringCreateWithCString(CFTypeRef, const char *, uint32_t);
+    CFTypeRef CFDataCreate(CFTypeRef, const char *, CFIndex);
+    CFTypeRef CFHTTPMessageCreateRequest(CFTypeRef, CFTypeRef, CFTypeRef, CFTypeRef);
+    void CFHTTPMessageSetBody(CFTypeRef, CFTypeRef);
+    void CFHTTPMessageSetHeaderFieldValue(CFTypeRef, CFTypeRef, CFTypeRef);
+    CFIndex CFHTTPMessageGetResponseStatusCode(CFTypeRef);
+    CFTypeRef CFReadStreamCreateForHTTPRequest(CFTypeRef, CFTypeRef);
+    unsigned char CFReadStreamOpen(CFTypeRef);
+    CFIndex CFReadStreamGetStatus(CFTypeRef);
+    unsigned char CFReadStreamHasBytesAvailable(CFTypeRef);
+    CFIndex CFReadStreamRead(CFTypeRef, uint8_t *, CFIndex);
+    CFTypeRef CFReadStreamCopyProperty(CFTypeRef, CFTypeRef);
+    CFTypeRef CFReadStreamCopyError(CFTypeRef);
+    CFTypeRef CFErrorCopyDescription(CFTypeRef);
+    unsigned char CFStringGetCString(CFTypeRef, char *, CFIndex, uint32_t);
+    void CFReadStreamClose(CFTypeRef);
+    void CFRelease(CFTypeRef);
+    extern const CFTypeRef kCFHTTPVersion1_1;
+    extern const CFTypeRef kCFStreamPropertyHTTPResponseHeader;
+  ]]
+  -- CFNetwork is loaded with Foundation; dlsym on its handle also finds CoreFoundation
+  local ok, C = pcall(ffi.load, "/System/Library/Frameworks/CFNetwork.framework/CFNetwork")
+  if not ok then C = ffi.C end
+  assert(C.kCFStreamPropertyHTTPResponseHeader ~= nil, "CFNetwork not found")
+  local UTF8, AT_END, ERROR = 0x08000100, 5, 7
+  local buf = ffi.new("uint8_t[4096]")
+  local function cfstr(s) return C.CFStringCreateWithCString(nil, s, UTF8) end
+  local function stream_error(stream)
+    local err = C.CFReadStreamCopyError(stream)
+    if err == nil then return "CFNetwork error" end
+    local desc, text = C.CFErrorCopyDescription(err), "CFNetwork error"
+    if desc ~= nil and C.CFStringGetCString(desc, buf, 4096, UTF8) ~= 0 then text = ffi.string(buf) end
+    if desc ~= nil then C.CFRelease(desc) end
+    C.CFRelease(err)
+    return text
+  end
+  local function exchange(stream)
+    if C.CFReadStreamOpen(stream) == 0 then return stream_error(stream) end
+    local deadline = socket.gettime() + TIMEOUT
+    while true do -- read the whole (small) response; the status line is all we keep
+      local status = tonumber(C.CFReadStreamGetStatus(stream))
+      if status == ERROR then return stream_error(stream) end
+      if status == AT_END then break end
+      if C.CFReadStreamHasBytesAvailable(stream) ~= 0 then
+        local n = tonumber(C.CFReadStreamRead(stream, buf, 4096))
+        if n < 0 then return stream_error(stream) end
+        if n == 0 then break end
+      elseif socket.gettime() > deadline then
+        return "timeout"
+      else
+        socket.sleep(0.02)
+      end
+    end
+    local response = C.CFReadStreamCopyProperty(stream, C.kCFStreamPropertyHTTPResponseHeader)
+    if response == nil then return "no response" end
+    local code = tonumber(C.CFHTTPMessageGetResponseStatusCode(response))
+    C.CFRelease(response)
+    return code
+  end
+  return function(url, body, headers)
+    local cfurl = C.CFURLCreateWithBytes(nil, url, #url, UTF8, nil)
+    if cfurl == nil then return "invalid URL" end
+    local method, data = cfstr("POST"), C.CFDataCreate(nil, body, #body)
+    local request = C.CFHTTPMessageCreateRequest(nil, method, cfurl, C.kCFHTTPVersion1_1)
+    C.CFHTTPMessageSetBody(request, data)
+    for k, v in pairs(headers) do
+      local ks, vs = cfstr(k), cfstr(v)
+      C.CFHTTPMessageSetHeaderFieldValue(request, ks, vs)
+      C.CFRelease(ks); C.CFRelease(vs)
+    end
+    local stream = C.CFReadStreamCreateForHTTPRequest(nil, request)
+    local result = exchange(stream)
+    C.CFReadStreamClose(stream)
+    for _, ref in ipairs { stream, request, data, method, cfurl } do C.CFRelease(ref) end
+    return result
+  end
+end
+
+function backends.curl()
+  local ffi = require "ffi"
+  ffi.cdef [[
+    typedef void CURL;
+    struct curl_slist;
+    typedef struct FILE FILE;
+    CURL *curl_easy_init(void);
+    int curl_easy_setopt(CURL *, int, ...);
+    int curl_easy_perform(CURL *);
+    int curl_easy_getinfo(CURL *, int, ...);
+    const char *curl_easy_strerror(int);
+    void curl_easy_cleanup(CURL *);
+    struct curl_slist *curl_slist_append(struct curl_slist *, const char *);
+    void curl_slist_free_all(struct curl_slist *);
+    FILE *fopen(const char *, const char *);
+  ]]
+  local lib
+  for _, name in ipairs { "curl", "libcurl.so.4", "libcurl-x64", "libcurl" } do
+    local ok, l = pcall(ffi.load, name)
+    if ok then lib = l break end
+  end
+  assert(lib, "libcurl not found")
+  local sink = assert(ffi.C.fopen(ffi.os == "Windows" and "NUL" or "/dev/null", "wb"), "no null device")
+  local URL, POSTFIELDS, POSTFIELDSIZE, HTTPHEADER, WRITEDATA = 10002, 10015, 60, 10023, 10001
+  local TIMEOUT_OPT, NOSIGNAL, RESPONSE_CODE = 13, 99, 0x200002
+  local long = ffi.typeof("long")
+  return function(url, body, headers)
+    local h = lib.curl_easy_init()
+    if h == nil then return "curl_easy_init failed" end
+    local list
+    for k, v in pairs(headers) do list = lib.curl_slist_append(list, k .. ": " .. v) end
+    lib.curl_easy_setopt(h, URL, url)
+    lib.curl_easy_setopt(h, POSTFIELDSIZE, long(#body))
+    lib.curl_easy_setopt(h, POSTFIELDS, body)
+    lib.curl_easy_setopt(h, HTTPHEADER, list)
+    lib.curl_easy_setopt(h, WRITEDATA, sink)
+    lib.curl_easy_setopt(h, TIMEOUT_OPT, long(TIMEOUT))
+    lib.curl_easy_setopt(h, NOSIGNAL, long(1))
+    local res, result = lib.curl_easy_perform(h)
+    if res ~= 0 then
+      result = ffi.string(lib.curl_easy_strerror(res))
+    else
+      local code = ffi.new("long[1]")
+      lib.curl_easy_getinfo(h, RESPONSE_CODE, code)
+      result = tonumber(code[0])
+    end
+    lib.curl_easy_cleanup(h)
+    lib.curl_slist_free_all(list)
+    return result
+  end
+end
+
+local post_https, https_error, reported
+local function https_backend()
+  if post_https or https_error then return post_https end
+  local errors = {}
+  for _, name in ipairs(prefer and { prefer } or { "lua_https", "cfnetwork", "curl" }) do
+    local ok, fn = pcall(backends[name])
+    if ok then
+      print("[otel] HTTPS export via " .. name)
+      post_https = fn
+      return fn
+    end
+    errors[#errors + 1] = name .. ": " .. tostring(fn)
+  end
+  https_error = "no HTTPS support (" .. table.concat(errors, "; ") .. ")"
+end
+
 while true do
   local job = channel:demand()
+  local headers = { ["content-type"] = "application/json", ["content-length"] = tostring(#job.body) }
+  local post = post_http
+  if job.url:match("^[Hh][Tt][Tt][Pp][Ss]://") then
+    post = https_backend() or function() return https_error end
+  end
+  local code
   for attempt = 1, 3 do
-    local _, code = http.request {
-      url = job.url,
-      method = "POST",
-      source = ltn12.source.string(job.body),
-      headers = { ["content-type"] = "application/json", ["content-length"] = tostring(#job.body) },
-    }
+    code = post(job.url, job.body, headers)
     if code == 200 then break end
+    if https_error and code == https_error then
+      if not reported then print("[otel] export to " .. job.url .. " failed: " .. code) end
+      reported = true
+      break
+    end
     local permanent = type(code) == "number" and code >= 400 and code < 500
     if permanent or attempt == 3 then
       print("[otel] export to " .. job.url .. " failed: " .. tostring(code))
@@ -270,8 +457,9 @@ while true do
     end
     socket.sleep(attempt)
   end
+  if job.reply then job.reply:push(tostring(code)) end -- tests: the final status or error
 end
-]]
+]==]
 
 local channel, worker
 
@@ -279,8 +467,8 @@ local function send(path, body)
   if not (love and love.thread) then return end -- outside the game (tests) there is nothing to send with
   if not worker then
     channel = love.thread.newChannel()
-    worker = love.thread.newThread(WORKER)
-    worker:start(channel)
+    worker = love.thread.newThread(M.WORKER)
+    worker:start(channel, M.https_backend)
   end
   local err = worker:getError()
   if err then return print("[otel] export thread died: " .. err) end
